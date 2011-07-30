@@ -1,0 +1,25 @@
+Installation Type
+=================
+
+type = ['directory', 'vserver']
+
+if type == 'directory':
+   vserver_num = <INT>
+   directory   = <PATH>
+
+elif type == 'vserver'
+   vserver_nick = <STR>
+
+
+Application Download
+====================
+
+app_fetch = ['auto', <HTTP_URL>, <PATH_TO_TARBALL>]
+
+  or
+
+app_dir = <PATH>
+
+
+
+

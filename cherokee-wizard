@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+
+# -*- coding: utf-8; mode: python -*-
+#
+# Cherokee-admin
+#
+# Authors:
+#      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#
+# Copyright (C) 2001-2011 Alvaro Lopez Ortega
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of version 2 of the GNU General Public
+# License as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+
+import os
+import sys
+import CTK
+import Wizard2
+import Install_Log
+import server
+
+USAGE =                                                                     \
+    "Usage:\n"                                                              \
+    "  cherokee-wizard install WIZARD config=PATH [option=<something>]\n"   \
+    "\n" \
+    "Report bugs to http://bugs.cherokee-project.com\n"
+
+
+def install (wizard_path, params):
+   # Log
+   Install_Log.only_print = True
+
+   # Load the module
+   mod = Wizard2.Load_Module (wizard_path)
+   if not mod:
+      print "ERROR: Could not load '%s'" %(wizard_path)
+      return 1
+
+   # Launch the wizard
+   installer = mod.Install (params.copy())
+
+   # Check parameters
+   errors = installer.Check_Parameters()
+   if errors:
+      for err in set(errors):
+         print err
+      return 1
+
+   # Pre-requisites
+   errors = installer.Check_Prerequisites()
+   if errors:
+      for err in set(errors):
+         print err
+      return 1
+
+   # Cherokee Configuration
+   errors = installer.Configure_Cherokee()
+   if errors:
+      for err in set(errors):
+         print err
+      return 1
+
+   print "ok"
+
+   # Save the config
+   CTK.cfg.save()
+
+
+def help():
+   print USAGE
+   return 1
+
+
+def main():
+   # Check paramaters
+   if len(sys.argv) < 3:
+      return help()
+
+   if sys.argv[1] != 'install':
+      return help()
+
+   # Process parameters
+   wizard = sys.argv[2]
+
+   params = {}
+   for p in sys.argv:
+      if '=' in p:
+         tmp = p.split('=')
+         val = tmp[1]
+
+         if val[0] in ['"', "'"] and val[-1] in ['"', "'"]:
+            val = val[1:-1]
+
+         params[tmp[0]] = val
+
+   # Read config file
+   if not 'config' in params:
+      return help()
+
+   config_file = params['config']
+   if not os.path.exists(config_file):
+      open (config_file, "w+").write (server.DEFAULT_EMPTY_CONFIG)
+
+   CTK.init()
+   CTK.cfg.file = params['config']
+   CTK.cfg.load()
+
+   # Install
+   return install (wizard, params)
+
+
+if __name__ == "__main__":
+   main()

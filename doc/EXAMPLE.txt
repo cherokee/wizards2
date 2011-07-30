@@ -1,0 +1,1 @@
+PYTHONPATH=~/prog/cherokee/admin/CTK:~/prog/cherokee/admin/ ./cherokee-wizard install 02-Content\ Management\ Systems/wordpress.py config=/tmp/hh type=vserver app_dir=/tmp/app vserver_nick=example.com
