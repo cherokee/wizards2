@@ -193,3 +193,10 @@ def Load_Module (path):
 
     php_mod_path = os.path.realpath (__file__ + '/../wizards/' + path)
     return CTK.load_module_pyc (php_mod_path, dsc)
+
+def Load_Template (path):
+    tmp = path.split('/')
+    dsc = tmp[-1].replace('.py','')
+
+    php_mod_path = os.path.realpath (__file__ + '/../templates/' + path)
+    return CTK.load_module_pyc (php_mod_path, dsc)

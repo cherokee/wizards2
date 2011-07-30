@@ -22,10 +22,7 @@
 # 02110-1301, USA.
 #
 
-import os
-import re
 import CTK
-import vserver
 import Wizard2
 import Wizard2_GUI
 
@@ -95,66 +92,21 @@ CONFIG_DIR = """
 %(pre_rule_minus4)s!handler!rewrite!1!substring = %(directory)s/index.php?/$1
 """
 
+#
+# Installer
+#
+
 TARBALL = "http://wordpress.org/latest.tar.gz"
-php_fpm = Wizard2.Load_Module ('01-Development Platforms/php-fpm.py')
+php_tpl = Wizard2.Load_Template ('PHP.py')
 
-
-class Install (Wizard2.Wizard):
+class Install (php_tpl.Install):
     def __init__ (self, params):
-        # Base
-        Wizard2.Wizard.__init__ (self, "Wordpress", params)
-
-        # Sibling wizard
-        self.php = self._Register_Child_Wizard (php_fpm.Install (params))
-
-    def Check_Parameters (self):
-        # PHP
-        errors = self.php.Check_Parameters()
-
-        # App location
-        errors += self._Check_Params_Install_Type (allows_dir=True, allows_vserver=True)
-        errors += self._Check_Software_Location()
-
-        return errors
-
-    def Check_Prerequisites (self):
-        # PHP
-        errors = self.php.Check_Prerequisites()
-        if errors: return errors
-
-        # Wordpress
-        errors = self._Handle_Download (tarball=TARBALL)
-        if errors: return errors
-
-        errors = self._Handle_Unpacking ()
-        if errors: return errors
-
-    def Configure_Cherokee (self):
-        # PHP
-        errors = self.php.Configure_Cherokee()
-        if errors: return errors
-
-        # Collect substitutions
-        props = cfg_get_surrounding_repls ('pre_rule', self.php.rule)
-        props.update (self.__dict__)
-
-        # Wordpress
-        if self.type == 'directory':
-            # Apply the configuration
-            config = CONFIG_DIR %(props)
-            CTK.cfg.apply_chunk (config)
-
-        elif self.type == 'vserver':
-            # Apply the configuration
-            config = CONFIG_VSERVER %(props)
-            CTK.cfg.apply_chunk (config)
-
-            # Static files
-            vserver.Add_Usual_Static_Files (props['pre_rule_plus1'])
-
-            # Normalize rules
-            CTK.cfg.normalize ('vserver!%s!rule'%(self.vserver_num))
-
+        php_tpl.Install.__init__ (self,
+                                  app_name         = "Wordpress",
+                                  config_vserver   = CONFIG_VSERVER,
+                                  config_directory = CONFIG_DIR,
+                                  tarball_url      = TARBALL,
+                                  params           = params)
 
 #
 # GUI
