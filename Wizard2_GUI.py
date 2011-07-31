@@ -77,15 +77,26 @@ class Phase_Next (Phase):
         return Phase.Render(self)
 
 class Phase_Cancel (Phase):
-    def __init__ (self, title, caption=None):
+    def __init__ (self, title):
         Phase.__init__ (self, title)
-        self.buttons_added  = False
-        self.button_caption = caption
+        self.buttons_added = False
 
     def Render (self):
         if not self.buttons_added:
             self.buttons_added = True
-            self += CTK.DruidButtonsPanel_Cancel (caption = self.button_caption)
+            self += CTK.DruidButtonsPanel_Cancel()
+
+        return Phase.Render(self)
+
+class Phase_Close (Phase):
+    def __init__ (self, title):
+        Phase.__init__ (self, title)
+        self.buttons_added = False
+
+    def Render (self):
+        if not self.buttons_added:
+            self.buttons_added = True
+            self += CTK.DruidButtonsPanel_Close()
 
         return Phase.Render(self)
 
@@ -398,7 +409,15 @@ class Stage_Do_Install (Phase_Cancel):
 # Select Install Type
 #
 
-class Stage_Finished (Phase_Cancel):
+class Stage_Finished (Phase_Close):
+    class Apply:
+        def __call__ (self):
+            return CTK.cfg_reply_ajax_ok()
+
     def __init__ (self):
-        Phase_Cancel.__init__ (self, _("Installation Finished"), caption="Close")
+        Phase_Close.__init__ (self, _("Installation Finished"))
         self += CTK.RawHTML ('We are done and dusted!')
+
+
+URL_STAGE_FINISHED_APPLY = "/wizard2/stages/finished/apply"
+CTK.publish ('^%s'%(URL_STAGE_FINISHED_APPLY), Stage_Finished.Apply, method="POST")
