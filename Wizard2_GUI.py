@@ -206,12 +206,12 @@ CTK.publish ('^%s'%(URL_STAGE_VSERVER_LOGGING_APPLY), Stage_VServer_Logging.Appl
 #
 
 NOTE_DOWNLOAD_URL = N_("URL or path to the software package. For instance, a tar.gz or zip file.")
-NOTE_APP_DIR      = N_("Directory where the software is already installed. Eg: you installed it with your distro's package.")
+NOTE_APP_DIR      = N_("Directory where the software is already installed. In case you're using your distro's package, for instance.")
 
 INSTALL_OPTIONS = [
     ('download_auto',   N_('Automatic Download')),
-    ('download_URL',    N_('Download from a URL')),
-    ('local_directory', N_('Local Directory')),
+    ('download_URL',    N_('Use a Specific Package')),
+    ('local_directory', N_('Already Installed Software')),
 ]
 
 INSTALL_TYPE_ON_CHANGE_JS = """
@@ -263,7 +263,7 @@ class Stage_Install_Type (Phase_PrevNext):
                 return CTK.cfg_reply_ajax_ok()
 
     def __init__ (self):
-        Phase_PrevNext.__init__ (self, _("Installation Type"))
+        Phase_PrevNext.__init__ (self, _("Software Retrival Method"))
 
     def __build_GUI__ (self):
         radios = CTK.RadioGroupCfg ('%s!install_type'%(CFG_PREFIX), INSTALL_OPTIONS, {'checked': INSTALL_OPTIONS[0][0]})
@@ -281,7 +281,7 @@ class Stage_Install_Type (Phase_PrevNext):
         table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
 
         automatic = CTK.Box (prop_blocks)
-        automatic += CTK.RawHTML ("<h3>%s</h3>"%(_('Automatic installation')))
+        automatic += CTK.RawHTML ("<h3>%s</h3>"%(_('Automatic Download')))
         automatic += table
 
         # Download_URL block
@@ -290,7 +290,7 @@ class Stage_Install_Type (Phase_PrevNext):
         table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
 
         download_URL = CTK.Box (prop_blocks_hidden)
-        download_URL += CTK.RawHTML ("<h3>%s</h3>"%(_('Specific Download')))
+        download_URL += CTK.RawHTML ("<h3>%s</h3>"%(_('Use a specific Package')))
         download_URL += table
 
         # Local_Directory block
@@ -298,7 +298,7 @@ class Stage_Install_Type (Phase_PrevNext):
         table.Add (_('Directory of the application'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX)), _(NOTE_APP_DIR))
 
         local_directory  = CTK.Box (prop_blocks_hidden)
-        local_directory += CTK.RawHTML ("<h3>%s</h3>"%(_('Installed Software')))
+        local_directory += CTK.RawHTML ("<h3>%s</h3>"%(_('Already Installed Software')))
         local_directory += table
 
         # Events handling
@@ -321,11 +321,28 @@ class Stage_Install_Type (Phase_PrevNext):
         self.bind ('goto_next_stage', CTK.DruidContent__JS_to_goto_next (box.id))
 
 
+def validation_download_url (value):
+    # URL or Path
+    value = validations.is_url_or_path (value)
+
+    # If path, ensure it exists
+    if value.startswith('/'):
+        value = validations.is_path (value)
+        if not os.path.exists (value):
+            raise ValueError, _('Path does not exist')
+
+    return value
+
+
+VALIDATION_INSTALL_TYPE = VALIDATION + [
+    ('%s!download_url'%(CFG_PREFIX), validation_download_url)
+]
+
 URL_STAGE_INSTALL_TYPE       = "/wizard2/stages/install_type"
 URL_STAGE_INSTALL_TYPE_APPLY = "/wizard2/stages/install_type/apply"
 
 CTK.publish ('^%s'%(URL_STAGE_INSTALL_TYPE),       Stage_Install_Type)
-CTK.publish ('^%s'%(URL_STAGE_INSTALL_TYPE_APPLY), Stage_Install_Type.Apply, validation=VALIDATION, method="POST")
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_TYPE_APPLY), Stage_Install_Type.Apply, validation=VALIDATION_INSTALL_TYPE, method="POST")
 
 
 

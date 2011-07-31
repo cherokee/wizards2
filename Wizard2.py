@@ -131,6 +131,7 @@ class Wizard (object):
         return errors
 
     def _Handle_Download (self, tarball=None):
+        errors   = []
         url      = None
         pkg_path = None
 
@@ -140,6 +141,10 @@ class Wizard (object):
 
         # Static file
         elif self.app_fetch[0] == '/':
+            if not os.path.exists (self.app_fetch):
+                errors += [_("File or Directory not found: %(app_path)s") %({'app_path': self.app_fetch})]
+                return errors
+
             if os.path.isdir(self.app_fetch):
                 self.targz_path = self.app_dir
             else:
