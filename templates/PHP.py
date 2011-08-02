@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8; mode: python -*-
 #
 # Cherokee-admin
@@ -66,12 +67,16 @@ class Install (Wizard2.Wizard):
         errors = self.php.Check_Prerequisites()
         if errors: return errors
 
-        # Wordpress
+    def Download_Unpack (self):
+        # Download
         errors = self._Handle_Download (tarball = self._tarball_url)
         if errors: return errors
 
+        # Unpack
         errors = self._Handle_Unpacking ()
         if errors: return errors
+
+        return []
 
     def Configure_Cherokee (self):
         # PHP

@@ -65,6 +65,13 @@ def install (wizard_path, params):
          print err
       return 1
 
+   # Download and Unpack
+   errors = installer.Download_Unpack()
+   if errors:
+      for err in set(errors):
+         print err
+      return 1
+
    # Cherokee Configuration
    errors = installer.Configure_Cherokee()
    if errors:

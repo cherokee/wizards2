@@ -392,6 +392,16 @@ def check_prerequisites (stage_obj):
     # Ok
     return {'retcode': 0}
 
+def download_unpack (stage_obj):
+    installer = stage_obj.installer
+
+    errors = installer.Download_Unpack()
+    if errors:
+        return {'retcode': 1, 'stderr': errors[0]}
+
+    # Ok
+    return {'retcode': 0}
+
 def configure_cherokee (stage_obj):
     installer = stage_obj.installer
 
@@ -414,7 +424,8 @@ class Stage_Do_Install (Phase_Cancel):
         commands = [
             ({'function': collect_arguments,   'description': "Collecting arguments...", 'params': {'installer_params': self.installer_params}}),
             ({'function': check_params,        'description': "Checking parameters...",  'params': {'installer_params': self.installer_params, 'stage_obj': self, 'Install_Class': Install_Class}}),
-            ({'function': check_prerequisites, 'description': "Downloading...",          'params': {'stage_obj': self}}),
+            ({'function': check_prerequisites, 'description': "Checking requisites...",  'params': {'stage_obj': self}}),
+            ({'function': download_unpack,     'description': "Downloading...",          'params': {'stage_obj': self}}),
             ({'function': configure_cherokee,  'description': "Configuring...",          'params': {'stage_obj': self}}),
         ]
 

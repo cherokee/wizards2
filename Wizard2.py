@@ -55,6 +55,9 @@ class Wizard (object):
     def Check_Prerequisites (self):
         pass
 
+    def Download_Unpack (self):
+        pass
+
     def Configure_Cherokee (self):
         pass
 
