@@ -108,6 +108,13 @@ class Install (php_tpl.Install):
                                   tarball_url      = TARBALL,
                                   params           = params)
 
+    def Check_Prerequisites (self):
+        errors = php_tpl.Install.Check_Prerequisites (self)
+        errors += self._Prerequisite__MySQL()
+        return errors
+
+
+
 #
 # GUI
 #

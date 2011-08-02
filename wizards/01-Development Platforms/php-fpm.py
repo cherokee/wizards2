@@ -73,9 +73,7 @@ class Install (Wizard2.Wizard):
 
     def Check_Prerequisites (self):
         # Find the binary
-        self.php_bin = path_find_binary (FPM_BINS,
-                                         extra_dirs  = DEFAULT_PATHS,
-                                         custom_test = _test_php_fcgi)
+        self.php_bin = _find_binary()
         if not self.php_bin:
             return ["Could not locate the php-fpm binary"]
 
@@ -169,6 +167,11 @@ class Install (Wizard2.Wizard):
 #
 # Helper functions
 #
+
+def _find_binary ():
+    return path_find_binary (FPM_BINS,
+                             extra_dirs  = DEFAULT_PATHS,
+                             custom_test = _test_php_fcgi)
 
 def _test_php_fcgi (path):
     f = os.popen('%s -v' %(path), 'r')

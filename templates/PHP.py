@@ -29,6 +29,7 @@ import CTK
 import vserver
 import Wizard2
 import Wizard2_GUI
+import popen
 
 from util import *
 
@@ -67,6 +68,8 @@ class Install (Wizard2.Wizard):
         errors = self.php.Check_Prerequisites()
         if errors: return errors
 
+        return []
+
     def Download_Unpack (self):
         # Download
         errors = self._Handle_Download (tarball = self._tarball_url)
@@ -103,3 +106,71 @@ class Install (Wizard2.Wizard):
 
             # Normalize rules
             CTK.cfg.normalize ('vserver!%s!rule'%(self.vserver_num))
+
+        return []
+
+
+    #
+    # Modules
+    #
+
+    def _get_PHP_modules (self):
+        # PHP binary
+        php_path = php_fpm._find_binary()
+        if not php_path:
+            return []
+
+        # Execute php -m
+        ret = popen.popen_sync ('%s -m' %(php_path))
+
+        # Parse output
+        modules = re.findall('(^[a-zA-Z0-9].*$)', ret['stdout'], re.MULTILINE)
+        return modules
+
+    def _check_PHP_modules (self, modules):
+        # Preformat
+        if type(modules) == list:
+            mods = modules
+        else:
+            mods = [modules]
+
+        # List of PHP modules
+        available_modules = self._get_PHP_modules()
+        if not available_modules:
+            return False
+
+        # Cross the list
+        result = {}
+        for m in mods:
+            result[m] = m in available_modules
+
+        return result
+
+    def _Prerequisite__check_PHP_modules (self, modules):
+        errors  = []
+        results = self._check_PHP_modules (modules)
+
+        for module in results:
+            if not results[module]:
+                errors += ["The PHP module '%(name)s' was not found" %({'name': module})]
+
+        return errors
+
+    def _Prerequisite__MySQL (self, check_mysql=True, check_mysqli=True):
+        # Check the modules
+        if check_mysql:
+            error_mysql = self._Prerequisite__check_PHP_modules ('mysql')
+        if check_mysqli:
+            error_mysqli = self._Prerequisite__check_PHP_modules ('mysqli')
+
+        # Interpret the return values
+        if check_mysql and check_mysqli and error_mysql and error_mysqli:
+            return [_("Wordpress requieres PHP to have either the 'mysql' or 'mysqli' modules")]
+
+        if check_mysqli and not check_mysql and error_mysqli:
+            return error_mysqli
+
+        if check_mysql and not check_mysqli and error_mysql:
+            return error_mysql
+
+        return []
