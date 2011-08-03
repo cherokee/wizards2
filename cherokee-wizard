@@ -54,7 +54,8 @@ def install (wizard_path, params):
    # Go through all the installation phases
    for phase in (installer.Check_Parameters,
                  installer.Check_Prerequisites,
-                 installer.Download_Unpack,
+                 installer.Download,
+                 installer.Unpack,
                  installer.Configure_Cherokee):
 
       errors = phase()

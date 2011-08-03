@@ -55,7 +55,10 @@ class Wizard (object):
     def Check_Prerequisites (self):
         pass
 
-    def Download_Unpack (self):
+    def Download (self):
+        pass
+
+    def Unpack (self):
         pass
 
     def Configure_Cherokee (self):
@@ -172,7 +175,6 @@ class Wizard (object):
             Install_Log.log ("Download completed: %s" %(self.targz_path))
 
         return []
-
 
     def _Handle_Unpacking (self):
         if not self.targz_path:

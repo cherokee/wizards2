@@ -70,16 +70,13 @@ class Install (Wizard2.Wizard):
 
         return []
 
-    def Download_Unpack (self):
-        # Download
+    def Download (self):
         errors = self._Handle_Download (tarball = self._tarball_url)
-        if errors: return errors
+        return errors or []
 
-        # Unpack
+    def Unpack (self):
         errors = self._Handle_Unpacking ()
-        if errors: return errors
-
-        return []
+        return errors or []
 
     def Configure_Cherokee (self):
         # PHP
