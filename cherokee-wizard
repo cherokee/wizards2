@@ -51,33 +51,17 @@ def install (wizard_path, params):
    # Launch the wizard
    installer = mod.Install (params.copy())
 
-   # Check parameters
-   errors = installer.Check_Parameters()
-   if errors:
-      for err in set(errors):
-         print err
-      return 1
+   # Go through all the installation phases
+   for phase in (installer.Check_Parameters,
+                 installer.Check_Prerequisites,
+                 installer.Download_Unpack,
+                 installer.Configure_Cherokee):
 
-   # Pre-requisites
-   errors = installer.Check_Prerequisites()
-   if errors:
-      for err in set(errors):
-         print err
-      return 1
-
-   # Download and Unpack
-   errors = installer.Download_Unpack()
-   if errors:
-      for err in set(errors):
-         print err
-      return 1
-
-   # Cherokee Configuration
-   errors = installer.Configure_Cherokee()
-   if errors:
-      for err in set(errors):
-         print err
-      return 1
+      errors = phase()
+      if errors:
+         for err in set(errors):
+            print err
+         return 1
 
    print "ok"
 
