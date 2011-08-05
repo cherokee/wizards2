@@ -41,25 +41,65 @@ VALIDATION = [
 # Phase's base
 #
 
-class Phase (CTK.Container):
+OLD = """
+class Phase_OLD (CTK.Box):
     def __init__ (self, title):
-        CTK.Container.__init__ (self)
+        CTK.Box.__init__ (self)
         self.title = title
-        self.cont  = CTK.Container()
+        self.cont  = CTK.Box()
 
     def __iadd__ (self, w):
         self.cont += w
         return self
 
     def Render (self):
-        box = CTK.Container()
+        box = CTK.Box()
         box += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
         box += self.cont
         return box.Render()
 
     def __call__ (self):
         if hasattr (self, '__build_GUI__'):
-            self.cont = CTK.Container()
+            self.cont = CTK.Box()
+            self.__build_GUI__()
+
+        return self.Render().toStr()
+"""
+
+class Phase (CTK.Box):
+    def __init__ (self, title):
+        CTK.Box.__init__ (self)
+        self.title = title
+        self.built = False
+
+    def Render (self):
+        if not self.built:
+            self.built = True
+            self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
+            if hasattr (self, '__build_GUI__'):
+                self.__build_GUI__()
+
+        return CTK.Box.Render (self)
+
+    def __call__ (self):
+        return self.Render().toStr()
+
+
+#        self.title_added = False
+
+
+
+#    def Render (self):
+#        if not self.title_added:
+#            self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
+#            self.title_added = True
+
+#        return CTK.Box.Render (self)
+
+    def __callOLD__ (self):
+        if hasattr (self, '__build_GUI__'):
+            self.Empty()
+            self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
             self.__build_GUI__()
 
         return self.Render().toStr()
@@ -120,13 +160,15 @@ class Phase_PrevNext (Phase):
 class Phase_Welcome (Phase_Next):
     def __init__ (self, wizard, install_type):
         Phase_Next.__init__ (self, "Welcome to the %s Wizard"%(wizard))
-        self += CTK.RawHTML ('Welcome!')
 
         # Clean up previous wizard info
         del (CTK.cfg[CFG_PREFIX])
 
         # Set installation type
         CTK.cfg['%s!type'%(CFG_PREFIX)] = install_type
+
+    def __build_GUI__ (self):
+        self += CTK.RawHTML ('Welcome!')
 
 
 #
@@ -214,111 +256,119 @@ INSTALL_OPTIONS = [
     ('local_directory', N_('Already Installed Software')),
 ]
 
-INSTALL_TYPE_ON_CHANGE_JS = """
-$('.stage_install_type_block').hide();
-
-var val = $('#%s input[type=\"radio\"]:checked').val();
-     if (val == 'download_auto')   { %s }
-else if (val == 'download_URL')    { %s }
-else if (val == 'local_directory') { %s }
-"""
-
 class Stage_Install_Type (Phase_PrevNext):
-    class Apply:
-        def __call__ (self):
-            type_key = '%s!install_type'%(CFG_PREFIX)
-            url_key  = '%s!download_url'%(CFG_PREFIX)
-            dir_key  = '%s!app_dir'     %(CFG_PREFIX)
-
-            tipe_cfg  = CTK.cfg.get_val(type_key)
-            tipe_post = CTK.post.get_val(type_key)
-
-            # Changed type of install
-            if tipe_cfg != tipe_post:
-                if tipe_post == 'download_auto':
-                    CTK.cfg['%s!app_fetch'%(CFG_PREFIX)] = 'auto'
-                return CTK.cfg_apply_post()
-
-            # Download URL
-            if tipe_cfg == 'download_auto':
-                CTK.cfg['%s!app_fetch'%(CFG_PREFIX)] = 'auto'
-                return CTK.cfg_reply_ajax_ok()
-
-            # Download URL
-            elif tipe_cfg == 'download_URL':
-                url = CTK.post.get_val (url_key)
-                if not url:
-                    return {'ret': 'unsatisfactory', 'errors': {url_key: _('Cannot be empty')}}
-
-                CTK.cfg['%s!app_fetch'%(CFG_PREFIX)] = url
-                return CTK.cfg_reply_ajax_ok()
-
-            # Local Directory
-            elif tipe_cfg == 'local_directory':
-                directory = CTK.post.get_val (dir_key)
-                if not directory:
-                    return {'ret': 'unsatisfactory', 'errors': {dir_key: _('Cannot be empty')}}
-
-                CTK.cfg['%s!app_dir'%(CFG_PREFIX)] = directory
-                return CTK.cfg_reply_ajax_ok()
-
     def __init__ (self):
         Phase_PrevNext.__init__ (self, _("Software Retrival Method"))
 
     def __build_GUI__ (self):
+        # Refresh
+        refresh = CTK.Refreshable({'id': 'wizard2-stage-install-type-refresh'})
+        refresh.register (lambda: self.Refresh_Content (refresh, self).Render())
+
+        # Radio buttons
         radios = CTK.RadioGroupCfg ('%s!install_type'%(CFG_PREFIX), INSTALL_OPTIONS, {'checked': INSTALL_OPTIONS[0][0]})
 
-        submit = CTK.Submitter (URL_STAGE_INSTALL_TYPE_APPLY)
+        # Submitter
+        submit = CTK.Submitter (URL_STAGE_INSTALL_APPLY)
+        submit.bind ('submit_success', refresh.JS_to_refresh())
         submit += radios
-        submit.bind ('submit_success', submit.JS_to_trigger ('goto_next_stage'))
 
-        # Blocks
-        prop_blocks        = {'class': 'stage_install_type_block'}
-        prop_blocks_hidden = {'class': 'stage_install_type_block', 'style': 'display: none;'}
+        # GUI Layout
+        self += submit
+        self += refresh
+        self.bind ('goto_next_stage', CTK.DruidContent__JS_to_goto_next (self.id))
 
-        # Automatic
-        table = CTK.PropsTable()
-        table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
 
-        automatic = CTK.Box (prop_blocks)
-        automatic += CTK.RawHTML ("<h3>%s</h3>"%(_('Automatic Download')))
-        automatic += table
+    class Apply:
+        def __call__ (self):
+            tipe = CTK.post.get_val ('%s!install_type'%(CFG_PREFIX))
 
-        # Download_URL block
-        table = CTK.PropsTable()
-        table.Add (_('URL/Path to package'), CTK.TextCfg('%s!download_url'%(CFG_PREFIX)), _(NOTE_DOWNLOAD_URL))
-        table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
+            if tipe == 'download_auto':
+                CTK.cfg['%s!app_fetch'%(CFG_PREFIX)] = 'auto'
+            elif CTK.cfg.get_val('%s!app_fetch'%(CFG_PREFIX)) == 'auto':
+                del (CTK.cfg['%s!app_fetch'%(CFG_PREFIX)])
 
-        download_URL = CTK.Box (prop_blocks_hidden)
-        download_URL += CTK.RawHTML ("<h3>%s</h3>"%(_('Use a specific Package')))
-        download_URL += table
+            return CTK.cfg_apply_post()
 
-        # Local_Directory block
-        table = CTK.PropsTable()
-        table.Add (_('Directory of the application'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX)), _(NOTE_APP_DIR))
+    class Refresh_Content (CTK.Box):
+        def __init__ (self, refresh, parent_widget):
+            CTK.Box.__init__ (self)
 
-        local_directory  = CTK.Box (prop_blocks_hidden)
-        local_directory += CTK.RawHTML ("<h3>%s</h3>"%(_('Already Installed Software')))
-        local_directory += table
+            pself   = parent_widget
+            default = INSTALL_OPTIONS[0][0]
+            method  = CTK.cfg.get_val ('%s!install_type'%(CFG_PREFIX), default)
 
-        # Events handling
-        js = INSTALL_TYPE_ON_CHANGE_JS %(radios.id,
-                                         automatic.JS_to_show(),
-                                         download_URL.JS_to_show(),
-                                         local_directory.JS_to_show())
-        radios.bind ('change', js)
+            if method == 'download_auto':
+                self += pself.Download_Auto (refresh, pself)
+            elif method == 'download_URL':
+                self += pself.Download_URL (refresh)
+            elif method == 'local_directory':
+                self += pself.Local_Directory (refresh)
+            else:
+                self += CTK.RawHTML ('<h1>%s</h1>' %(_("Unknown method")))
 
-        submit += automatic
-        submit += download_URL
-        submit += local_directory
+    class Download_Auto (CTK.Box):
+        def __init__ (self, refresh, pself):
+            CTK.Box.__init__ (self)
 
-        box = CTK.Box()
-        box += submit
-        box += CTK.RawHTML (js = js)
-        self += box
+            table = CTK.PropsTable()
+            table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
 
-        # Next stage
-        self.bind ('goto_next_stage', CTK.DruidContent__JS_to_goto_next (box.id))
+            submit = CTK.Submitter (URL_STAGE_INSTALL_AUTO_APPLY)
+            submit.bind ('submit_success', table.JS_to_trigger ('goto_next_stage'))
+            submit += table
+
+            self += CTK.RawHTML ("<h3>%s</h3>"%(_('Automatic Download')))
+            self += submit
+
+        class Apply:
+            def __call__ (self):
+                return CTK.cfg_apply_post()
+
+    class Download_URL (CTK.Box):
+        def __init__ (self, refresh):
+            CTK.Box.__init__ (self)
+
+            table = CTK.PropsTable()
+            table.Add (_('URL/Path to package'), CTK.TextCfg('%s!app_fetch'%(CFG_PREFIX)), _(NOTE_DOWNLOAD_URL))
+            table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
+
+            submit = CTK.Submitter (URL_STAGE_INSTALL_URL_APPLY)
+            submit.bind ('submit_success', table.JS_to_trigger ('goto_next_stage'))
+            submit += table
+
+            self += CTK.RawHTML ("<h3>%s</h3>"%(_('Use a specific Package')))
+            self += submit
+
+        class Apply:
+            def __call__ (self):
+                key = '%s!app_fetch'%(CFG_PREFIX)
+                if not CTK.post.get_val(key):
+                    return {'ret': 'unsatisfactory', 'errors': {key: _('Cannot be empty')}}
+
+                return CTK.cfg_apply_post()
+
+    class Local_Directory (CTK.Box):
+        def __init__ (self, refresh):
+            CTK.Box.__init__ (self)
+
+            table = CTK.PropsTable()
+            table.Add (_('Directory of the application'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX)), _(NOTE_APP_DIR))
+
+            submit = CTK.Submitter (URL_STAGE_INSTALL_LOCAL_APPLY)
+            submit.bind ('submit_success', table.JS_to_trigger ('goto_next_stage'))
+            submit += table
+
+            self += CTK.RawHTML ("<h3>%s</h3>"%(_('Already Installed Software')))
+            self += submit
+
+        class Apply:
+            def __call__ (self):
+                key = '%s!app_dir' %(CFG_PREFIX)
+                if not CTK.post.get_val(key):
+                    return {'ret': 'unsatisfactory', 'errors': {key: _('Cannot be empty')}}
+
+                return CTK.cfg_apply_post()
 
 
 def validation_download_url (value):
@@ -335,15 +385,18 @@ def validation_download_url (value):
 
 
 VALIDATION_INSTALL_TYPE = VALIDATION + [
-    ('%s!download_url'%(CFG_PREFIX), validation_download_url)
+    ('%s!app_fetch'%(CFG_PREFIX), validation_download_url)
 ]
 
-URL_STAGE_INSTALL_TYPE       = "/wizard2/stages/install_type"
-URL_STAGE_INSTALL_TYPE_APPLY = "/wizard2/stages/install_type/apply"
+URL_STAGE_INSTALL_APPLY       = "/wizard2/stages/install_type/apply"
+URL_STAGE_INSTALL_AUTO_APPLY  = "/wizard2/stages/install_type/auto/apply"
+URL_STAGE_INSTALL_URL_APPLY   = "/wizard2/stages/install_type/url/apply"
+URL_STAGE_INSTALL_LOCAL_APPLY = "/wizard2/stages/install_type/local_dir/apply"
 
-CTK.publish ('^%s'%(URL_STAGE_INSTALL_TYPE),       Stage_Install_Type)
-CTK.publish ('^%s'%(URL_STAGE_INSTALL_TYPE_APPLY), Stage_Install_Type.Apply, validation=VALIDATION_INSTALL_TYPE, method="POST")
-
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_APPLY),       Stage_Install_Type.Apply,                 validation=VALIDATION_INSTALL_TYPE, method="POST")
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_AUTO_APPLY),  Stage_Install_Type.Download_Auto.Apply,   validation=VALIDATION_INSTALL_TYPE, method="POST")
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_URL_APPLY),   Stage_Install_Type.Download_URL.Apply,    validation=VALIDATION_INSTALL_TYPE, method="POST")
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_LOCAL_APPLY), Stage_Install_Type.Local_Directory.Apply, validation=VALIDATION_INSTALL_TYPE, method="POST")
 
 
 #

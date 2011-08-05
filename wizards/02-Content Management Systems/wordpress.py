@@ -28,6 +28,8 @@ import Wizard2_GUI
 
 from util import *
 
+php_tpl = Wizard2.Load_Template ('PHP.py')
+
 CONFIG_VSERVER = """
 vserver!%(vserver_num)s!nick = %(vserver_nick)s
 vserver!%(vserver_num)s!document_root = %(app_dir)s/wordpress
@@ -95,9 +97,7 @@ CONFIG_DIR = """
 #
 # Installer
 #
-
 TARBALL = "http://wordpress.org/latest.tar.gz"
-php_tpl = Wizard2.Load_Template ('PHP.py')
 
 class Install (php_tpl.Install):
     def __init__ (self, params):
@@ -114,11 +114,9 @@ class Install (php_tpl.Install):
         return errors
 
 
-
 #
 # GUI
 #
-
 CTK.publish ('^/wizard/vserver/wordpress$',   lambda: Wizard2_GUI.Phase_Welcome ('Wordpress', 'vserver').Render().toStr())
 CTK.publish ('^/wizard/vserver/wordpress/2$', Wizard2_GUI.Stage_Install_Type)
 CTK.publish ('^/wizard/vserver/wordpress/3$', Wizard2_GUI.Stage_Enter_VServer)
