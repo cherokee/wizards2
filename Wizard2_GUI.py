@@ -41,31 +41,6 @@ VALIDATION = [
 # Phase's base
 #
 
-OLD = """
-class Phase_OLD (CTK.Box):
-    def __init__ (self, title):
-        CTK.Box.__init__ (self)
-        self.title = title
-        self.cont  = CTK.Box()
-
-    def __iadd__ (self, w):
-        self.cont += w
-        return self
-
-    def Render (self):
-        box = CTK.Box()
-        box += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
-        box += self.cont
-        return box.Render()
-
-    def __call__ (self):
-        if hasattr (self, '__build_GUI__'):
-            self.cont = CTK.Box()
-            self.__build_GUI__()
-
-        return self.Render().toStr()
-"""
-
 class Phase (CTK.Box):
     def __init__ (self, title):
         CTK.Box.__init__ (self)
@@ -83,18 +58,6 @@ class Phase (CTK.Box):
 
     def __call__ (self):
         return self.Render().toStr()
-
-
-#        self.title_added = False
-
-
-
-#    def Render (self):
-#        if not self.title_added:
-#            self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
-#            self.title_added = True
-
-#        return CTK.Box.Render (self)
 
     def __callOLD__ (self):
         if hasattr (self, '__build_GUI__'):
