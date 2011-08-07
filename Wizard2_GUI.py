@@ -338,7 +338,14 @@ INSTALL_DIR_OPTIONS = [
 class Stage_Install_Directory (Phase_PrevNext):
     def __init__ (self):
         Phase_PrevNext.__init__ (self, _("Installation Directory"))
+
     def __build_GUI__ (self):
+        # Skip phase if it's configuring an already installed app
+        install_type = CTK.cfg.get_val ('%s!install_type'%(CFG_PREFIX))
+        if install_type == 'local_directory':
+            self += CTK.DruidContent_TriggerNext()
+            return
+
         # Refresh
         refresh = CTK.Refreshable({'id': 'wizard2-stage-install-dir-type-refresh'})
         refresh.register (lambda: self.Refresh_Content (refresh, self).Render())
@@ -408,8 +415,6 @@ CTK.publish ('^%s'%(URL_STAGE_INSTALL_DIR_APPLY), Stage_Install_Directory.Apply,
 #
 
 def collect_arguments (installer_params):
-    print "[0] installer_params", installer_params
-
     # Set the installer parameters:
     #
     for key in CTK.cfg.keys (CFG_PREFIX):
@@ -487,16 +492,27 @@ class Stage_Do_Install (Phase_Cancel):
         self.next_url      = next_url
 
     def __build_GUI__ (self):
+        install_type = CTK.cfg.get_val ('%s!install_type'%(CFG_PREFIX))
+
         # Logic Installer
         self.installer_params = {}
 
-        # Commands
+        # Commands (first block)
         commands = [
             ({'function': collect_arguments,   'description': "Collecting arguments...", 'params': {'installer_params': self.installer_params}}),
             ({'function': check_params,        'description': "Checking parameters...",  'params': {'installer_params': self.installer_params, 'stage_obj': self, 'Install_Class': self.Install_Class}}),
             ({'function': check_prerequisites, 'description': "Checking requisites...",  'params': {'stage_obj': self}}),
-            ({'function': download,            'description': "Downloading...",          'params': {'stage_obj': self}}),
-            ({'function': unpack,              'description': "Unpacking...",            'params': {'stage_obj': self}}),
+        ]
+
+        # Commands (Download and Unpack are optional)
+        if install_type != 'local_directory':
+            commands += [
+                ({'function': download,        'description': "Downloading...",          'params': {'stage_obj': self}}),
+                ({'function': unpack,          'description': "Unpacking...",            'params': {'stage_obj': self}}),
+            ]
+
+        # Commands (second block)
+        commands += [
             ({'function': configure_cherokee,  'description': "Configuring...",          'params': {'stage_obj': self}}),
         ]
 
