@@ -45,14 +45,12 @@ class Phase (CTK.Box):
     def __init__ (self, title):
         CTK.Box.__init__ (self)
         self.title = title
-        self.built = False
 
     def Render (self):
-        if not self.built:
-            self.built = True
-            self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
-            if hasattr (self, '__build_GUI__'):
-                self.__build_GUI__()
+        self.Empty()
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_(self.title)))
+        if hasattr (self, '__build_GUI__'):
+            self.__build_GUI__()
 
         return CTK.Box.Render (self)
 
@@ -62,50 +60,38 @@ class Phase (CTK.Box):
 class Phase_Next (Phase):
     def __init__ (self, title):
         Phase.__init__ (self, title)
-        self.buttons_added = False
 
     def Render (self):
-        if not self.buttons_added:
-            self.buttons_added = True
-            self += CTK.DruidButtonsPanel_Next_Auto()
-
-        return Phase.Render(self)
+        render = Phase.Render (self)
+        render += CTK.DruidButtonsPanel_Next_Auto().Render()
+        return render
 
 class Phase_Cancel (Phase):
     def __init__ (self, title):
         Phase.__init__ (self, title)
-        self.buttons_added = False
 
     def Render (self):
-        if not self.buttons_added:
-            self.buttons_added = True
-            self += CTK.DruidButtonsPanel_Cancel()
-
-        return Phase.Render(self)
+        render = Phase.Render (self)
+        render += CTK.DruidButtonsPanel_Cancel().Render()
+        return render
 
 class Phase_Close (Phase):
     def __init__ (self, title):
         Phase.__init__ (self, title)
-        self.buttons_added = False
 
     def Render (self):
-        if not self.buttons_added:
-            self.buttons_added = True
-            self += CTK.DruidButtonsPanel_Close()
-
-        return Phase.Render(self)
+        render = Phase.Render (self)
+        render += CTK.DruidButtonsPanel_Close().Render()
+        return render
 
 class Phase_PrevNext (Phase):
     def __init__ (self, title):
         Phase.__init__ (self, title)
-        self.buttons_added = False
 
     def Render (self):
-        if not self.buttons_added:
-            self.buttons_added = True
-            self += CTK.DruidButtonsPanel_PrevNext_Auto()
-
-        return Phase.Render(self)
+        render = Phase.Render (self)
+        render += CTK.DruidButtonsPanel_PrevNext_Auto().Render()
+        return render
 
 
 #
