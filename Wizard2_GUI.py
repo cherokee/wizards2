@@ -347,6 +347,7 @@ class Stage_Install_Directory (Phase_PrevNext):
         # GUI Layout
         self += submit
         self += refresh
+        self.bind ('goto_next_stage', CTK.DruidContent__JS_to_goto_next (self.id))
 
     class Apply:
         def __call__ (self):
@@ -381,6 +382,7 @@ class Stage_Install_Directory (Phase_PrevNext):
             table.Add (_('Installation directory'), CTK.TextCfg('%s!app_dir'%(CFG_PREFIX), True, {'optional_string': _('Automatic')}), _(NOTE_APP_DIR))
 
             submit = CTK.Submitter (URL_STAGE_INSTALL_DIR_APPLY)
+            submit.bind ('submit_success', table.JS_to_trigger ('goto_next_stage'))
             submit += table
 
             self += submit
