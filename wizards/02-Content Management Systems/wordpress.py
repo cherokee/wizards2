@@ -119,7 +119,8 @@ class Install (php_tpl.Install):
 #
 CTK.publish ('^/wizard/vserver/wordpress$',   lambda: Wizard2_GUI.Phase_Welcome ('Wordpress', 'vserver').Render().toStr())
 CTK.publish ('^/wizard/vserver/wordpress/2$', Wizard2_GUI.Stage_Install_Type)
-CTK.publish ('^/wizard/vserver/wordpress/3$', Wizard2_GUI.Stage_Enter_VServer)
-CTK.publish ('^/wizard/vserver/wordpress/4$', Wizard2_GUI.Stage_VServer_Logging)
-CTK.publish ('^/wizard/vserver/wordpress/5$', lambda: Wizard2_GUI.Stage_Do_Install (Install, "/wizard/vserver/wordpress/6").Render().toStr())
-CTK.publish ('^/wizard/vserver/wordpress/6$', Wizard2_GUI.Stage_Finished)
+CTK.publish ('^/wizard/vserver/wordpress/3$', Wizard2_GUI.Stage_Install_Directory)
+CTK.publish ('^/wizard/vserver/wordpress/4$', Wizard2_GUI.Stage_Enter_VServer)
+CTK.publish ('^/wizard/vserver/wordpress/5$', Wizard2_GUI.Stage_VServer_Logging)
+CTK.publish ('^/wizard/vserver/wordpress/6$', lambda: Wizard2_GUI.Stage_Do_Install (Install, "/wizard/vserver/wordpress/6").Render().toStr())
+CTK.publish ('^/wizard/vserver/wordpress/7$', Wizard2_GUI.Stage_Finished)
