@@ -125,7 +125,11 @@ class CommandProgress (CTK.Box, Replacement_Commons):
                 if ret.get('command'):
                     title_error = CTK.escape_html (ret['command'])
                 elif command_entry.has_key ('function'):
-                    title_error = CTK.escape_html (command_entry['function'].__name__)
+                    if command_entry.has_key('description'):
+                        title_error = CTK.escape_html ('%s (%s)'%(command_entry['description'],
+                                                                  command_entry['function'].__name__))
+                    else:
+                        title_error = CTK.escape_html (command_entry['function'].__name__)
                 else:
                     title_error = _("Unknown Error")
 

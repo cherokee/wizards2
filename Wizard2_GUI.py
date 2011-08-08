@@ -462,6 +462,16 @@ def unpack (stage_obj):
     # Ok
     return {'retcode': 0}
 
+def check_post_unpack (stage_obj):
+    installer = stage_obj.installer
+
+    errors = installer.Check_PostUnpack()
+    if errors:
+        return {'retcode': 1, 'stderr': errors[0]}
+
+    # Ok
+    return {'retcode': 0}
+
 def configure_cherokee (stage_obj):
     installer = stage_obj.installer
 
@@ -495,13 +505,14 @@ class Stage_Do_Install (Phase_Cancel):
         # Commands (Download and Unpack are optional)
         if install_type != 'local_directory':
             commands += [
-                ({'function': download,        'description': "Downloading...",          'params': {'stage_obj': self}}),
-                ({'function': unpack,          'description': "Unpacking...",            'params': {'stage_obj': self}}),
+                ({'function': download, 'description': "Downloading...", 'params': {'stage_obj': self}}),
+                ({'function': unpack,   'description': "Unpacking...",   'params': {'stage_obj': self}}),
             ]
 
         # Commands (second block)
         commands += [
-            ({'function': configure_cherokee,  'description': "Configuring...",          'params': {'stage_obj': self}}),
+            ({'function': check_post_unpack,  'description': "Checking app...", 'params': {'stage_obj': self}}),
+            ({'function': configure_cherokee, 'description': "Configuring...",  'params': {'stage_obj': self}}),
         ]
 
         # GUI

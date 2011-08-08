@@ -30,7 +30,7 @@ import Install_Log
 
 class Wizard (object):
     def __init__ (self, name, params=None):
-        self.name = "Unnamed"
+        self.name = name or "Unnamed"
 
         self.type         = None # 'directory' or 'vserver'
         self.vserver_num  = None # 10, 20, ..
@@ -50,19 +50,22 @@ class Wizard (object):
     # Public
     #
     def Check_Parameters (self):
-        pass
+        return []
 
     def Check_Prerequisites (self):
-        pass
+        return []
 
     def Download (self):
-        pass
+        return []
 
     def Unpack (self):
-        pass
+        return []
+
+    def Check_PostUnpack (self):
+        return []
 
     def Configure_Cherokee (self):
-        pass
+        return []
 
     #
     # Private
@@ -196,6 +199,21 @@ class Wizard (object):
 
         return []
 
+    #
+    # Checks
+    #
+    def _Check_File_Exists (self, filename):
+        assert self.app_dir
+        assert self.name
+
+        errors = []
+        fpath  = os.path.join (self.app_dir, filename)
+
+        if not os.path.exists (fpath):
+            errors += [_("The '%(app_dir)s' directory does not look like a %(name)s directory: The %(filename)s file is missing.")
+                       %({'app_dir': self.app_dir, 'name': self.name, 'filename': filename})]
+
+        return errors
 
 def Load_Module (path):
     tmp = path.split('/')

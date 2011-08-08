@@ -113,6 +113,9 @@ class Install (php_tpl.Install):
         errors += self._Prerequisite__MySQL()
         return errors
 
+    def Check_PostUnpack (self):
+        errors = self._Check_File_Exists ('wp-comments-post.php')
+        return errors
 
 #
 # GUI
