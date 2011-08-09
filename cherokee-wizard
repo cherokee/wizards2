@@ -57,7 +57,8 @@ def install (wizard_path, params):
                  installer.Download,
                  installer.Unpack,
                  installer.Check_PostUnpack,
-                 installer.Configure_Cherokee):
+                 installer.Configure_Cherokee,
+                 installer.Configure_Cherokee_PostApply):
 
       errors = phase()
       if errors:

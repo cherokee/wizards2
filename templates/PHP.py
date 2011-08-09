@@ -84,22 +84,27 @@ class Install (Wizard2.Wizard):
         if errors: return errors
 
         # Collect substitutions
-        props = cfg_get_surrounding_repls ('pre_rule', self.php.rule)
-        props.update (self.__dict__)
+        self.cfg_replacements = cfg_get_surrounding_repls ('pre_rule', self.php.rule)
+        self.cfg_replacements.update (self.__dict__)
 
         # Wordpress
         if self.type == 'directory':
             # Apply the configuration
-            config = self._config_directory %(props)
+            config = self._config_directory %(self.cfg_replacements)
             CTK.cfg.apply_chunk (config)
+
+            # Post-Apply hook
+            errors = self.Configure_Cherokee_PostApply ()
+            if errors: return errors
 
         elif self.type == 'vserver':
             # Apply the configuration
-            config = self._config_vserver %(props)
+            config = self._config_vserver %(self.cfg_replacements)
             CTK.cfg.apply_chunk (config)
 
-            # Static files
-            vserver.Add_Usual_Static_Files (props['pre_rule_plus1'])
+            # Post-Apply hook
+            errors = self.Configure_Cherokee_PostApply ()
+            if errors: return errors
 
             # Normalize rules
             CTK.cfg.normalize ('vserver!%s!rule'%(self.vserver_num))

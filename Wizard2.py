@@ -67,6 +67,9 @@ class Wizard (object):
     def Configure_Cherokee (self):
         return []
 
+    def Configure_Cherokee_PostApply (self):
+        return []
+
     #
     # Protected
     #

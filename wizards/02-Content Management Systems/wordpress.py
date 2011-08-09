@@ -23,6 +23,7 @@
 #
 
 import CTK
+import vserver
 import Wizard2
 import Wizard2_GUI
 
@@ -123,6 +124,10 @@ class Install (php_tpl.Install):
 
     def Check_PostUnpack (self):
         return self._Check_File_Exists ('wp-comments-post.php')
+
+    def Configure_Cherokee_PostApply (self):
+        vserver.Add_Usual_Static_Files (self.cfg_replacements['pre_rule_plus1'])
+
 
 #
 # GUI
