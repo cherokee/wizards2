@@ -151,6 +151,9 @@ class Install (Wizard2.Wizard):
             if int(self.params.get('flcache', "1")):
                 CTK.cfg['%s!flcache' %(next)]               = 'allow'
 
+            # Normalization
+            CTK.cfg.normalize('%s!rule'%(pre))
+
             self.rule = _find_rule(pre)
 
         # Index files
@@ -158,10 +161,6 @@ class Install (Wizard2.Wizard):
         if not 'index.php' in indexes:
             indexes.append ('index.php')
             CTK.cfg['%s!directory_index' %(pre)] = ','.join(indexes)
-
-        # Normalization
-        CTK.cfg.normalize('%s!rule'%(pre))
-
 
 
 #

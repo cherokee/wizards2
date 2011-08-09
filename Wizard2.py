@@ -68,7 +68,7 @@ class Wizard (object):
         return []
 
     #
-    # Private
+    # Protected
     #
     def _Register_Child_Wizard (self, wizard_obj):
         wizard_obj.params = self.params

@@ -32,7 +32,7 @@ php_tpl = Wizard2.Load_Template ('PHP.py')
 
 CONFIG_VSERVER = """
 vserver!%(vserver_num)s!nick = %(vserver_nick)s
-vserver!%(vserver_num)s!document_root = %(app_dir)s/wordpress
+vserver!%(vserver_num)s!document_root = %(app_dir)s
 vserver!%(vserver_num)s!directory_index = index.php,index.html
 
 # The PHP rule comes here
@@ -63,7 +63,7 @@ CONFIG_DIR = """
 %(pre_rule_plus1)s!match = directory
 %(pre_rule_plus1)s!match!directory = %(directory)s
 %(pre_rule_plus1)s!match!final = 0
-%(pre_rule_plus1)s!document_root = %(app_dir)s/wordpress
+%(pre_rule_plus1)s!document_root = %(app_dir)s
 
 # The PHP rule comes here
 
@@ -113,9 +113,16 @@ class Install (php_tpl.Install):
         errors += self._Prerequisite__MySQL()
         return errors
 
+    def _Handle_Unpacking (self):
+        # Unpack
+        errors = php_tpl.Install._Handle_Unpacking (self)
+        if errors: return errors
+
+        # Update app_dir, WP is in a subdir
+        self.app_dir = os.path.join (self.app_dir, "wordpress")
+
     def Check_PostUnpack (self):
-        errors = self._Check_File_Exists ('wp-comments-post.php')
-        return errors
+        return self._Check_File_Exists ('wp-comments-post.php')
 
 #
 # GUI
