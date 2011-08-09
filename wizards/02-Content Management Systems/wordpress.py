@@ -115,7 +115,6 @@ class Install (php_tpl.Install):
         return errors
 
     def _Handle_Unpacking (self):
-        # Unpack
         errors = php_tpl.Install._Handle_Unpacking (self)
         if errors: return errors
 

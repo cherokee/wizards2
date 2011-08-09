@@ -202,6 +202,25 @@ class Wizard (object):
 
         return []
 
+    def _Handle_Log_VServer (self):
+        # For VServers only
+        if not self.type == 'vserver':
+            return []
+
+        # Log config cloning
+        cp_vserver_log = self.params.get ('cp_vsrv_log')
+        if cp_vserver_log:
+            vsrv_1st = CTK.cfg.get_lowest_entry ('vserver')
+
+            if CTK.cfg['vserver!%s!logger' %(vsrv_1st)]:
+                CTK.cfg.clone ('vserver!%s!logger' %(vsrv_1st), 'vserver!%s!logger' %(self.vserver_num))
+
+            if CTK.cfg['vserver!%s!error_writer'%(vsrv_1st)]:
+                CTK.cfg.clone ('vserver!%s!error_writer' %(vsrv_1st), 'vserver!%s!error_writer' %(self.vserver_num))
+
+        return []
+
+
     #
     # Checks
     #

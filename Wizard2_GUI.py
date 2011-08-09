@@ -150,11 +150,6 @@ CTK.publish ('^%s'%(URL_STAGE_ENTER_VSERVER_APPLY), Stage_Enter_VServer.Apply, v
 # Virtual Server Logging
 #
 
-LOGGING_OPTIONS = [
-    ('',     N_('No logging')),
-    ('copy', N_('Copy from default'))
-]
-
 class Stage_VServer_Logging (Phase_PrevNext):
     class Apply:
         def __call__ (self):
@@ -164,8 +159,15 @@ class Stage_VServer_Logging (Phase_PrevNext):
         Phase_PrevNext.__init__ (self, _("Logging Configuration"))
 
     def __build_GUI__ (self):
+        vsrv_def = CTK.cfg.get_lowest_entry ('vserver')
+
+        logging_options = [
+            ('',       N_('No logging')),
+            (vsrv_def, N_('Copy from default'))
+        ]
+
         submit = CTK.Submitter (URL_STAGE_VSERVER_LOGGING_APPLY)
-        submit += CTK.RadioGroupCfg ('%s!logging'%(CFG_PREFIX), LOGGING_OPTIONS, {'checked': LOGGING_OPTIONS[0][0]})
+        submit += CTK.RadioGroupCfg ('%s!cp_vsrv_log'%(CFG_PREFIX), logging_options, {'checked': logging_options[0][0]})
 
         box = CTK.Box()
         box += submit

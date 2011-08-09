@@ -109,6 +109,10 @@ class Install (Wizard2.Wizard):
             # Normalize rules
             CTK.cfg.normalize ('vserver!%s!rule'%(self.vserver_num))
 
+        # Logging config
+        errors = self._Handle_Log_VServer()
+        if errors: return errors
+
         return []
 
 
