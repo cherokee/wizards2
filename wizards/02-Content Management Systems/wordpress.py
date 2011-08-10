@@ -25,7 +25,7 @@
 import CTK
 import vserver
 import Wizard2
-import Wizard2_GUI
+import Wizard2_GUI as GUI
 
 from util import *
 
@@ -125,16 +125,19 @@ class Install (php_tpl.Install):
         return self._Check_File_Exists ('wp-comments-post.php')
 
     def Configure_Cherokee_PostApply (self):
-        vserver.Add_Usual_Static_Files (self.cfg_replacements['pre_rule_plus1'])
+        if self.type == 'vserver':
+            vserver.Add_Usual_Static_Files (self.cfg_replacements['pre_rule_plus1'])
 
 
 #
 # GUI
 #
-CTK.publish ('^/wizard/vserver/wordpress$',   lambda: Wizard2_GUI.Phase_Welcome ('Wordpress', 'vserver').Render().toStr())
-CTK.publish ('^/wizard/vserver/wordpress/2$', Wizard2_GUI.Stage_Install_Type)
-CTK.publish ('^/wizard/vserver/wordpress/3$', Wizard2_GUI.Stage_Install_Directory)
-CTK.publish ('^/wizard/vserver/wordpress/4$', Wizard2_GUI.Stage_Enter_VServer)
-CTK.publish ('^/wizard/vserver/wordpress/5$', Wizard2_GUI.Stage_VServer_Logging)
-CTK.publish ('^/wizard/vserver/wordpress/6$', lambda: Wizard2_GUI.Stage_Do_Install (Install, "/wizard/vserver/wordpress/7").Render().toStr())
-CTK.publish ('^/wizard/vserver/wordpress/7$', Wizard2_GUI.Stage_Finished)
+URL_SRV = '/wizard/vserver/wordpress'
+
+CTK.publish ('^%s$'  %(URL_SRV), lambda: GUI.Phase_Welcome ('Wordpress', 'vserver').Render().toStr())
+CTK.publish ('^%s/2$'%(URL_SRV), GUI.Stage_Install_Type)
+CTK.publish ('^%s/3$'%(URL_SRV), GUI.Stage_Install_Directory)
+CTK.publish ('^%s/4$'%(URL_SRV), GUI.Stage_Enter_VServer)
+CTK.publish ('^%s/5$'%(URL_SRV), GUI.Stage_VServer_Logging)
+CTK.publish ('^%s/6$'%(URL_SRV), lambda: GUI.Stage_Do_Install (Install, "%s/7"%(URL_SRV)).Render().toStr())
+CTK.publish ('^%s/7$'%(URL_SRV), GUI.Stage_Finished)
