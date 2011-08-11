@@ -539,3 +539,28 @@ class Stage_Finished (Phase_Close):
 
 URL_STAGE_FINISHED_APPLY = "/wizard2/stages/finished/apply"
 CTK.publish ('^%s'%(URL_STAGE_FINISHED_APPLY), Stage_Finished.Apply, method="POST")
+
+
+
+#
+# Helpers
+#
+
+def Register_Standard_VServer_GUI (wizard_name, Install_Class):
+    wizard_url_name = wizard_name.lower().replace(' ', '_')
+    url_srv         = '/wizard/vserver/%s' %(wizard_url_name)
+
+    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_name, 'vserver').Render().toStr())
+    CTK.publish ('^%s/2$'%(url_srv), Stage_Install_Type)
+    CTK.publish ('^%s/3$'%(url_srv), Stage_Install_Directory)
+    CTK.publish ('^%s/4$'%(url_srv), Stage_Enter_VServer)
+    CTK.publish ('^%s/5$'%(url_srv), Stage_VServer_Logging)
+    CTK.publish ('^%s/6$'%(url_srv), lambda: Stage_Do_Install (Install_Class, "%s/7"%(url_srv)).Render().toStr())
+    CTK.publish ('^%s/7$'%(url_srv), Stage_Finished)
+
+def Register_Standard_Directory_GUI (wizard_name, Install_Class):
+    None
+
+def Register_Standard_GUI (*args, **kw):
+    Register_Standard_VServer_GUI   (*args, **kw)
+    Register_Standard_Directory_GUI (*args, **kw)

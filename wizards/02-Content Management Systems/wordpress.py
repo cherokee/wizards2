@@ -132,12 +132,5 @@ class Install (php_tpl.Install):
 #
 # GUI
 #
-URL_SRV = '/wizard/vserver/wordpress'
 
-CTK.publish ('^%s$'  %(URL_SRV), lambda: GUI.Phase_Welcome ('Wordpress', 'vserver').Render().toStr())
-CTK.publish ('^%s/2$'%(URL_SRV), GUI.Stage_Install_Type)
-CTK.publish ('^%s/3$'%(URL_SRV), GUI.Stage_Install_Directory)
-CTK.publish ('^%s/4$'%(URL_SRV), GUI.Stage_Enter_VServer)
-CTK.publish ('^%s/5$'%(URL_SRV), GUI.Stage_VServer_Logging)
-CTK.publish ('^%s/6$'%(URL_SRV), lambda: GUI.Stage_Do_Install (Install, "%s/7"%(URL_SRV)).Render().toStr())
-CTK.publish ('^%s/7$'%(URL_SRV), GUI.Stage_Finished)
+GUI.Register_Standard_GUI ('Wordpress', Install)
