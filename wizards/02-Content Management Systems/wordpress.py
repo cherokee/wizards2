@@ -106,7 +106,6 @@ class Install (php_tpl.Install):
                                   app_name         = "Wordpress",
                                   config_vserver   = CONFIG_VSERVER,
                                   config_directory = CONFIG_DIR,
-                                  tarball_url      = TARBALL,
                                   params           = params)
 
     def Check_Prerequisites (self):
@@ -119,13 +118,13 @@ class Install (php_tpl.Install):
         if errors: return errors
 
         # Update app_dir, WP is in a subdir
-        self.app_dir = os.path.join (self.app_dir, "wordpress")
+        self.params['app_dir'] = os.path.join (self.params['app_dir'], "wordpress")
 
     def Check_PostUnpack (self):
         return self._Check_File_Exists ('wp-comments-post.php')
 
     def Configure_Cherokee_PostApply (self):
-        if self.type == 'vserver':
+        if self.params['type'] == 'vserver':
             vserver.Add_Usual_Static_Files (self.cfg_replacements['pre_rule_plus1'])
 
 
@@ -133,4 +132,4 @@ class Install (php_tpl.Install):
 # GUI
 #
 
-GUI.Register_Standard_GUI ('Wordpress', Install)
+GUI.Register_Standard_GUI ('Wordpress', Install, TARBALL)

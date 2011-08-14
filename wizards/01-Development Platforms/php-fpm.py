@@ -78,7 +78,7 @@ class Install (Wizard2.Wizard):
             return ["Could not locate the php-fpm binary"]
 
     def Configure_Cherokee (self):
-        pre = 'vserver!%s' %(self.vserver_num)
+        pre = 'vserver!%s' %(self.params['vserver_num'])
 
         # Gather information
         self.source = _find_source()

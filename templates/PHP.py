@@ -38,11 +38,10 @@ php_fpm = Wizard2.Load_Module ('01-Development Platforms/php-fpm.py')
 
 
 class Install (Wizard2.Wizard):
-    def __init__ (self, app_name, config_vserver, config_directory, tarball_url, params):
+    def __init__ (self, app_name, config_vserver, config_directory, params):
         self._app_name         = app_name
         self._config_vserver   = config_vserver
         self._config_directory = config_directory
-        self._tarball_url      = tarball_url
 
         # Base
         Wizard2.Wizard.__init__ (self, app_name, params)
@@ -71,24 +70,25 @@ class Install (Wizard2.Wizard):
         return []
 
     def Download (self):
-        errors = self._Handle_Download (tarball = self._tarball_url)
-        return errors or []
+        app_fetch = self.params.get('app_fetch')
+        return self._Handle_Download (tarball = app_fetch)
 
     def Unpack (self):
-        errors = self._Handle_Unpacking ()
-        return errors or []
+        return self._Handle_Unpacking ()
 
     def Configure_Cherokee (self):
+        tipe = self.params['type']
+
         # PHP
         errors = self.php.Configure_Cherokee()
         if errors: return errors
 
         # Collect substitutions
         self.cfg_replacements = cfg_get_surrounding_repls ('pre_rule', self.php.rule)
-        self.cfg_replacements.update (self.__dict__)
+        self.cfg_replacements.update (self.params)
 
         # Wordpress
-        if self.type == 'directory':
+        if tipe == 'directory':
             # Apply the configuration
             config = self._config_directory %(self.cfg_replacements)
             CTK.cfg.apply_chunk (config)
@@ -97,7 +97,7 @@ class Install (Wizard2.Wizard):
             errors = self.Configure_Cherokee_PostApply ()
             if errors: return errors
 
-        elif self.type == 'vserver':
+        elif tipe == 'vserver':
             # Apply the configuration
             config = self._config_vserver %(self.cfg_replacements)
             CTK.cfg.apply_chunk (config)
@@ -107,7 +107,7 @@ class Install (Wizard2.Wizard):
             if errors: return errors
 
             # Normalize rules
-            CTK.cfg.normalize ('vserver!%s!rule'%(self.vserver_num))
+            CTK.cfg.normalize ('vserver!%s!rule'%(self.params['vserver_num']))
 
         # Logging config
         errors = self._Handle_Log_VServer()

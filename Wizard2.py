@@ -29,17 +29,20 @@ import Install_Log
 
 
 class Wizard (object):
+    """
+    self.params
+    -----------
+    type :        'directory' or 'vserver'
+    vserver_num:  10, 20, ..
+    directory:    /webdir
+    vserver_nick: example.com
+    app_fetch:    /tmp/bat.tgz, http://_/foo.tgz
+    app_dir:      /var/www_apps/worpress
+    targz_path:   /tmp/foobar.tgz
+    """
+
     def __init__ (self, name, params=None):
         self.name = name or "Unnamed"
-
-        self.type         = None # 'directory' or 'vserver'
-        self.vserver_num  = None # 10, 20, ..
-        self.directory    = None # /webapp
-        self.vserver_nick = None # example.com
-        self.app_fetch    = None # /tmp/bar.tgz  or  http://_/foo.tgz
-        self.app_dir      = None # /var/www_apps/wordpress
-        self.downloader   = None # CTK.Downloader object
-        self.targz_path   = None # /tmp/foobar.tgz
 
         # Do not copy the params. We do want a child wizard to
         # reference its parent params dict.
@@ -90,8 +93,6 @@ class Wizard (object):
             errors += ["Invalid 'type' value. It must be either 'vserver' or 'directory'"]
             return errors
 
-        self.type = tipe
-
         # Directory
         if tipe == 'directory':
             vserver_num = self.params.get('vserver_num')
@@ -101,15 +102,11 @@ class Wizard (object):
                 errors += ["Property 'vserver_num' missing"]
             elif not vserver_num.isdigit():
                 errors += ["Invalid value of the 'directory' property: it must be a number"]
-            else:
-                self.vserver_num = vserver_num
 
             if not directory:
                 errors += ["Property 'directory' missing"]
             elif directory[0] != '/':
                 errors += ["Invalid value of the 'directory' property: it must be a directory path"]
-            else:
-                self.directory = directory
 
         # Virtual Server
         elif tipe == 'vserver':
@@ -118,26 +115,24 @@ class Wizard (object):
 
             if not vserver_nick:
                 errors += ["Property 'vserver_nick' missing"]
-            else:
-                self.vserver_nick = vserver_nick
 
-            if vserver_num:
-                errors += ["Property 'vserver_num' shouldn't be provided when creating a new virtual server"]
+            if vserver_num and CTK.cfg['vserver!%s'%(vserver_num)]:
+                errors += ["Invalid 'vserver_num'. Virtual server ID already in use."]
             else:
-                self.vserver_num = CTK.cfg.get_next_entry_prefix ('vserver').split ('!')[-1]
+                self.params['vserver_num'] = CTK.cfg.get_next_entry_prefix ('vserver').split ('!')[-1]
 
         return errors
 
     def _Check_Software_Location (self):
         errors = []
 
-        self.app_dir   = self.params.get('app_dir')
-        self.app_fetch = self.params.get('app_fetch')
+        app_dir   = self.params.get('app_dir')
+        app_fetch = self.params.get('app_fetch')
 
-        if self.app_fetch:
-            return errors
+        if app_fetch:
+            return []
 
-        if not self.app_dir:
+        if not app_dir:
             errors += ["The 'app_dir' property must be provided"]
 
         return errors
@@ -147,24 +142,36 @@ class Wizard (object):
         url      = None
         pkg_path = None
 
+        app_dir    = self.params.get('app_dir')
+        app_fetch  = self.params.get('app_fetch', '')
+        targz_path = self.params.get('targz_path')
+
+        # In case of running from the GUI, the file is downloaded by
+        # now, so the only thing left to do is to update the params.
+        if app_fetch.startswith ("http:"):
+            if CTK.DownloadEntry_Exists (app_fetch):
+                down_entry = CTK.DownloadEntry_Factory (app_fetch)
+                self.params['targz_path'] = down_entry.target_path
+                return []
+
         # Auto
-        if not self.app_fetch or self.app_fetch == 'auto':
+        if not app_fetch or app_fetch == 'auto':
             url = tarball
 
         # Static file
-        elif self.app_fetch[0] == '/':
-            if not os.path.exists (self.app_fetch):
-                errors += [_("File or Directory not found: %(app_path)s") %({'app_path': self.app_fetch})]
+        elif app_fetch[0] == '/':
+            if not os.path.exists (app_fetch):
+                errors += [_("File or Directory not found: %(app_path)s") %({'app_path': app_fetch})]
                 return errors
 
-            if os.path.isdir(self.app_fetch):
-                self.targz_path = self.app_dir
+            if os.path.isdir(app_fetch):
+                self.params['targz_path'] = app_dir
             else:
-                self.targz_path = self.app_fetch
+                self.params['targz_path'] = app_fetch
 
         # Download the software
         else:
-            url = self.app_fetch
+            url = self.params['app_fetch']
 
         if url:
             self.downloader = CTK.DownloadEntry_Factory (url)
@@ -177,46 +184,52 @@ class Wizard (object):
                 else:
                     Install_Log.log ("Downloaded %d / %d (%d%%)..." %(self.downloader.downloaded, self.downloader.size, (self.downloader.downloaded * 100 / self.downloader.size)))
 
-            self.targz_path = self.downloader.target_path
-            Install_Log.log ("Download completed: %s" %(self.targz_path))
+            self.params['targz_path'] = self.downloader.target_path
+            Install_Log.log ("Download completed: %s" %(self.params['targz_path']))
 
         return []
 
     def _Handle_Unpacking (self):
-        if not self.targz_path:
-            return
+        app_dir    = self.params.get('app_dir')
+        targz_path = self.params.get('targz_path')
 
-        assert self.app_dir
+        if not targz_path:
+            return []
+
+        assert app_dir
 
         # Create the app directory
-        if not os.path.exists(self.app_dir):
-            os.makedirs (self.app_dir)
+        if not os.path.exists(app_dir):
+            os.makedirs (app_dir)
 
         # Unpack
-        command = "gzip -dc '%s' | tar xfv -" %(self.targz_path)
-        Install_Log.log ("(cd: %s): %s" %(self.app_dir, command))
+        command = "gzip -dc '%s' | tar xfv -" %(targz_path)
+        Install_Log.log ("(cd: %s): %s" %(app_dir, command))
 
-        ret = popen.popen_sync (command, cd=self.app_dir)
+        ret = popen.popen_sync (command, cd=app_dir)
         Install_Log.log (ret['stdout'])
         Install_Log.log (ret['stderr'])
 
         return []
 
     def _Handle_Log_VServer (self):
+        tipe        = self.params.get('type')
+        vserver_num = self.params.get('vserver_num')
+        cp_vsrv_log = self.params.get('cp_vsrv_log')
+
         # For VServers only
-        if not self.type == 'vserver':
+        if not tipe == 'vserver':
             return []
 
         # Log config cloning
-        cp_vserver_log = self.params.get ('cp_vsrv_log')
-        if cp_vserver_log:
+        if cp_vsrv_log:
             vsrv_1st = CTK.cfg.get_lowest_entry ('vserver')
 
             if CTK.cfg['vserver!%s!logger' %(vsrv_1st)]:
-                CTK.cfg.clone ('vserver!%s!logger' %(vsrv_1st), 'vserver!%s!logger' %(self.vserver_num))
+                CTK.cfg.clone ('vserver!%s!logger' %(vsrv_1st), 'vserver!%s!logger' %(vserver_num))
 
             if CTK.cfg['vserver!%s!error_writer'%(vsrv_1st)]:
-                CTK.cfg.clone ('vserver!%s!error_writer' %(vsrv_1st), 'vserver!%s!error_writer' %(self.vserver_num))
+                CTK.cfg.clone ('vserver!%s!error_writer' %(vsrv_1st), 'vserver!%s!error_writer' %(vserver_num))
 
         return []
 
@@ -225,15 +238,17 @@ class Wizard (object):
     # Checks
     #
     def _Check_File_Exists (self, filename):
-        assert self.app_dir
+        app_dir = self.params.get('app_dir')
+
+        assert app_dir
         assert self.name
 
         errors = []
-        fpath  = os.path.join (self.app_dir, filename)
+        fpath  = os.path.join (app_dir, filename)
 
         if not os.path.exists (fpath):
             errors += [_("The '%(app_dir)s' directory does not look like a %(name)s directory: The %(filename)s file is missing.")
-                       %({'app_dir': self.app_dir, 'name': self.name, 'filename': filename})]
+                       %({'app_dir': app_dir, 'name': self.name, 'filename': filename})]
 
         return errors
 

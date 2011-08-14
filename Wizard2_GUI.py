@@ -194,8 +194,9 @@ INSTALL_OPTIONS = [
 ]
 
 class Stage_Install_Type (Phase_PrevNext):
-    def __init__ (self):
+    def __init__ (self, default_download_URL):
         Phase_PrevNext.__init__ (self, _("Software Retrival Method"))
+        self.default_URL = default_download_URL
 
     def __build_GUI__ (self):
         # Refresh
@@ -235,13 +236,25 @@ class Stage_Install_Type (Phase_PrevNext):
             method  = CTK.cfg.get_val ('%s!install_type'%(CFG_PREFIX), default)
 
             if method == 'download_auto':
-                None
+                self += pself.Download_Auto (pself)
             elif method == 'download_URL':
                 self += pself.Download_URL (refresh)
             elif method == 'local_directory':
                 self += pself.Local_Directory (refresh)
             else:
                 self += CTK.RawHTML ('<h1>%s</h1>' %(_("Unknown method")))
+
+    class Download_Auto (CTK.Box):
+        def __init__ (self, pself):
+            CTK.Box.__init__ (self)
+
+            submit = CTK.Submitter (URL_STAGE_INSTALL_AUTO_APPLY)
+            submit += CTK.Hidden ('%s!app_fetch'%(CFG_PREFIX), pself.default_URL)
+            self += submit
+
+        class Apply:
+            def __call__ (self):
+                return CTK.cfg_apply_post()
 
     class Download_URL (CTK.Box):
         def __init__ (self, refresh):
@@ -306,10 +319,12 @@ VALIDATION_INSTALL_TYPE = VALIDATION + [
 ]
 
 URL_STAGE_INSTALL_APPLY       = "/wizard2/stages/install_type/apply"
+URL_STAGE_INSTALL_AUTO_APPLY  = "/wizard2/stages/install_type/auto/apply"
 URL_STAGE_INSTALL_URL_APPLY   = "/wizard2/stages/install_type/url/apply"
 URL_STAGE_INSTALL_LOCAL_APPLY = "/wizard2/stages/install_type/local_dir/apply"
 
 CTK.publish ('^%s'%(URL_STAGE_INSTALL_APPLY),       Stage_Install_Type.Apply,                 validation=VALIDATION_INSTALL_TYPE, method="POST")
+CTK.publish ('^%s'%(URL_STAGE_INSTALL_AUTO_APPLY),  Stage_Install_Type.Download_Auto.Apply,   validation=VALIDATION_INSTALL_TYPE, method="POST")
 CTK.publish ('^%s'%(URL_STAGE_INSTALL_URL_APPLY),   Stage_Install_Type.Download_URL.Apply,    validation=VALIDATION_INSTALL_TYPE, method="POST")
 CTK.publish ('^%s'%(URL_STAGE_INSTALL_LOCAL_APPLY), Stage_Install_Type.Local_Directory.Apply, validation=VALIDATION_INSTALL_TYPE, method="POST")
 
@@ -399,9 +414,52 @@ URL_STAGE_INSTALL_DIR_APPLY = "/wizard2/stages/install_dir_type/apply"
 CTK.publish ('^%s'%(URL_STAGE_INSTALL_DIR_APPLY), Stage_Install_Directory.Apply, validation=VALIDATION_INSTALL_DIR_TYPE, method="POST")
 
 
+#
+# Download
+#
+
+class Stage_Download (Phase_Cancel):
+    def __init__ (self):
+        Phase_Cancel.__init__ (self, _("Downloading"))
+
+    def __build_GUI__ (self):
+        app_fetch = CTK.cfg.get_val ('%s!app_fetch'%(CFG_PREFIX))
+        skip      = False
+
+        # Special cases
+        if not app_fetch:
+            skip = True
+
+        if not app_fetch.startswith('http'):
+            skip = True
+
+            # (app_fetch != 'auto')):
+
+
+        # Skip the phase?
+        if skip:
+            self += CTK.RawHTML (js = CTK.DruidContent__JS_to_goto_next (self.id))
+            return
+
+        # Report
+        report = CTK.Box()
+        report += CTK.RawHTML (_("Initiating download.."))
+
+        # Download widget
+        down = CTK.Downloader ('package', app_fetch)
+        down.bind ('finished', CTK.DruidContent__JS_to_goto_next (self.id))
+        down.bind ('stopped',  "") ## TODO!!
+        down.bind ('error',    "") ## TODO!!
+        down.bind ('update', "$('#%s').html('Downloaded: ' + (event.downloaded / 1024).toFixed() + ' Kb');"%(report.id))
+
+        self += CTK.RawHTML ('<p>%s</p>' %(_('The application is being downloaded. Hold on tight!')))
+        self += down
+        self += report
+        self += CTK.RawHTML (js = down.JS_to_start())
+
 
 #
-# Select Install Type
+# Installation
 #
 
 def collect_arguments (installer_params):
@@ -546,19 +604,20 @@ CTK.publish ('^%s'%(URL_STAGE_FINISHED_APPLY), Stage_Finished.Apply, method="POS
 # Helpers
 #
 
-def Register_Standard_VServer_GUI (wizard_name, Install_Class):
+def Register_Standard_VServer_GUI (wizard_name, Install_Class, default_download_URL):
     wizard_url_name = wizard_name.lower().replace(' ', '_')
     url_srv         = '/wizard/vserver/%s' %(wizard_url_name)
 
     CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_name, 'vserver').Render().toStr())
-    CTK.publish ('^%s/2$'%(url_srv), Stage_Install_Type)
+    CTK.publish ('^%s/2$'%(url_srv), lambda: Stage_Install_Type (default_download_URL).Render().toStr())
     CTK.publish ('^%s/3$'%(url_srv), Stage_Install_Directory)
     CTK.publish ('^%s/4$'%(url_srv), Stage_Enter_VServer)
     CTK.publish ('^%s/5$'%(url_srv), Stage_VServer_Logging)
-    CTK.publish ('^%s/6$'%(url_srv), lambda: Stage_Do_Install (Install_Class, "%s/7"%(url_srv)).Render().toStr())
-    CTK.publish ('^%s/7$'%(url_srv), Stage_Finished)
+    CTK.publish ('^%s/6$'%(url_srv), Stage_Download)
+    CTK.publish ('^%s/7$'%(url_srv), lambda: Stage_Do_Install (Install_Class, "%s/8"%(url_srv)).Render().toStr())
+    CTK.publish ('^%s/8$'%(url_srv), Stage_Finished)
 
-def Register_Standard_Directory_GUI (wizard_name, Install_Class):
+def Register_Standard_Directory_GUI (wizard_name, Install_Class, default_download_URL):
     None
 
 def Register_Standard_GUI (*args, **kw):
