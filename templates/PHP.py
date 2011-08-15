@@ -34,7 +34,7 @@ import popen
 from util import *
 
 
-php_fpm = Wizard2.Load_Module ('01-Development Platforms/php-fpm.py')
+php_fpm = Wizard2.Load_Module ('php-fpm.py')
 
 
 class Install (Wizard2.Wizard):
