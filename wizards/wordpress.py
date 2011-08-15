@@ -31,6 +31,10 @@ from util import *
 
 php_tpl = Wizard2.Load_Template ('PHP.py')
 
+#
+# Configuration
+#
+
 CONFIG_VSERVER = """
 vserver!%(vserver_num)s!nick = %(vserver_nick)s
 vserver!%(vserver_num)s!document_root = %(app_dir)s
@@ -96,10 +100,29 @@ CONFIG_DIR = """
 """
 
 #
-# Installer
+# Public info
 #
 TARBALL = "http://wordpress.org/latest.tar.gz"
 
+DESC_SHORT = """WordPress is a state-of-the-art, semantic, personal
+publishing platform with a focus on aesthetics, Web standards, and
+usability. It was born out of a desire for an elegant,
+well-architected personal publishing system.
+"""
+
+software = {
+ 'id':          'wordpress',
+ 'name':        'WordPress',
+ 'author':      'Wordpress Community',
+ 'URL':         'http://wordpress.org/',
+ 'icon_small':  'wordpress_x96.png',
+ 'desc_short':  DESC_SHORT,
+ 'category':    'Content Management',
+}
+
+#
+# Installer
+#
 class Install (php_tpl.Install):
     def __init__ (self, params):
         php_tpl.Install.__init__ (self,
@@ -111,8 +134,9 @@ class Install (php_tpl.Install):
 
     def Check_Prerequisites (self):
         errors = php_tpl.Install.Check_Prerequisites (self)
-        errors += self._Prerequisite__MySQL()
-        return errors
+        if errors: return errors
+
+        return self._Prerequisite__MySQL()
 
     def _Handle_Unpacking (self):
         errors = php_tpl.Install._Handle_Unpacking (self)
@@ -128,9 +152,7 @@ class Install (php_tpl.Install):
         if self.type == 'vserver':
             vserver.Add_Usual_Static_Files (self.cfg_replacements['pre_rule_plus1'])
 
-
 #
 # GUI
 #
-
 GUI.Register_Standard_GUI ('Wordpress', Install, TARBALL)
