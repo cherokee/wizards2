@@ -38,10 +38,11 @@ php_fpm = Wizard2.Load_Module ('01-Development Platforms/php-fpm.py')
 
 
 class Install (Wizard2.Wizard):
-    def __init__ (self, app_name, config_vserver, config_directory, params):
+    def __init__ (self, app_name, config_vserver, config_directory, default_download=None, params=None):
         self._app_name         = app_name
         self._config_vserver   = config_vserver
         self._config_directory = config_directory
+        self._default_download = default_download
 
         # Base
         Wizard2.Wizard.__init__ (self, app_name, params)
@@ -70,8 +71,13 @@ class Install (Wizard2.Wizard):
         return []
 
     def Download (self):
-        app_fetch = self.params.get('app_fetch')
-        return self._Handle_Download (tarball = app_fetch)
+        if (not self.app_fetch) or (self.app_fetch == 'auto'):
+            if not self._default_download:
+                return []
+
+            self.app_fetch = self._default_download
+
+        return self._Handle_Download ()
 
     def Unpack (self):
         return self._Handle_Unpacking ()
