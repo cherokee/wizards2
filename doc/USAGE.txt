@@ -1,0 +1,38 @@
+Usage
+-----
+cherokee-wizard <command> <wizard> [<param>=<value>]
+
+Commands
+--------
+install      - Performs an app installation
+
+Common parameters
+-----------------
+config       - Path to the Cherokee configuration file to be modified. [required]
+
+type         - Type of the installation. [required]
+	          Accepted values:
+	            * "vserver":   Create a new virtual server for the app
+		       * "directory": Install it inside a directory of an existing vserver
+
+app_dir      - Local directory where the app should be deployed [optional]
+
+vserver_nick - Name of the new virtual server (if type=vserver) [required]
+
+fetch_app    - URL/Path to the source package [optional]
+		     Accepted values:
+			  * "auto":  Download the app automatically
+                 * <URL>:   Download certain source package
+                 * <PATH>:  User certain source package
+
+Example
+-------
+./cherokee-wizard install 02-Content\ Management\ Systems/wordpress.py \
+config=/tmp/cherokee.conf type=vserver app_dir=/tmp/wp_inst vserver_nick=example.com
+
+
+TEMP
+----
+PYTHONPATH=~/prog/cherokee/admin/CTK:~/prog/cherokee/admin/ \
+./cherokee-wizard install 02-Content\ Management\ Systems/wordpress.py \
+config=/tmp/hh type=vserver app_dir=/tmp/app vserver_nick=example.com
