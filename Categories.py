@@ -84,7 +84,8 @@ def load_wizards():
             # Load the wizard
             wizard_name = wizard.replace('.py', '')
             wizard_fp   = os.path.join (wizards_path, wizard_name)
-            mod = CTK.load_module (wizard_fp, wizard.replace('.py', ''))
+
+            mod = CTK.load_module (wizard_name, "wizards2/wizards")
 
             # Update Cache
             _wizards_objs.append (mod)

@@ -34,5 +34,5 @@ config=/tmp/cherokee.conf type=vserver app_dir=/tmp/wp_inst vserver_nick=example
 TEMP
 ----
 PYTHONPATH=~/prog/cherokee/admin/CTK:~/prog/cherokee/admin/ \
-./cherokee-wizard install 02-Content\ Management\ Systems/wordpress.py \
+./cherokee-wizard install drupal.py \
 config=/tmp/hh type=vserver app_dir=/tmp/app vserver_nick=example.com

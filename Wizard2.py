@@ -23,6 +23,7 @@
 #
 
 import os
+import re
 import CTK
 import popen
 import Install_Log
@@ -46,8 +47,8 @@ class Wizard (object):
     app_fetch  = property (lambda s: s.params.get('app_fetch'),  lambda s,v: s.params.update({'app_fetch': v}))
     targz_path = property (lambda s: s.params.get('targz_path'), lambda s,v: s.params.update({'targz_path': v}))
 
-    def __init__ (self, name, params=None):
-        self.name = name or "Unnamed"
+    def __init__ (self, app_info, params=None):
+        self.app_info = app_info
 
         # Do not copy the params. We do want a child wizard to
         # reference its parent params dict.
@@ -171,6 +172,8 @@ class Wizard (object):
             url = self.app_fetch
 
         if url:
+            Install_Log.log ("Downloading: %s" %(url))
+
             self.downloader = CTK.DownloadEntry_Factory (url)
             self.downloader.start()
 
@@ -206,6 +209,22 @@ class Wizard (object):
 
         return []
 
+    def _Update_app_dir (self, re_filter=None):
+        assert self.app_dir
+
+        for f in os.listdir (self.app_dir):
+            fp = os.path.join (self.app_dir, f)
+            if re_filter:
+                if not re.match (re_filter, f):
+                    continue
+
+            Install_Log.log ("Updating app_dir: %s to %s" %(self.app_dir, fp))
+            self.app_dir = fp
+            return []
+
+        Install_Log.log ("app_dir was not updated: %s" %(self.app_dir))
+        return []
+
     def _Handle_Log_VServer (self):
         vserver_num = self.params.get('vserver_num')
         cp_vsrv_log = self.params.get('cp_vsrv_log')
@@ -231,15 +250,15 @@ class Wizard (object):
     # Checks
     #
     def _Check_File_Exists (self, filename):
-        assert self.name
         assert self.app_dir
+        assert self.app_info and self.app_info.has_key('name')
 
         errors = []
         fpath  = os.path.join (self.app_dir, filename)
 
         if not os.path.exists (fpath):
             errors += [_("The '%(app_dir)s' directory does not look like a %(name)s directory: The %(filename)s file is missing.")
-                       %({'app_dir': self.app_dir, 'name': self.name, 'filename': filename})]
+                       %({'app_dir': self.app_dir, 'name': self.app_info['name'], 'filename': filename})]
 
         return errors
 

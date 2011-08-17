@@ -194,9 +194,9 @@ INSTALL_OPTIONS = [
 ]
 
 class Stage_Install_Type (Phase_PrevNext):
-    def __init__ (self, default_download_URL):
+    def __init__ (self, default_download_func):
         Phase_PrevNext.__init__ (self, _("Software Retrival Method"))
-        self.default_URL = default_download_URL
+        self.default_down_func = default_download_func
 
     def __build_GUI__ (self):
         # Refresh
@@ -248,8 +248,10 @@ class Stage_Install_Type (Phase_PrevNext):
         def __init__ (self, pself):
             CTK.Box.__init__ (self)
 
+            default_download_URL = pself.default_down_func()
+
             submit = CTK.Submitter (URL_STAGE_INSTALL_AUTO_APPLY)
-            submit += CTK.Hidden ('%s!app_fetch'%(CFG_PREFIX), pself.default_URL)
+            submit += CTK.Hidden ('%s!app_fetch'%(CFG_PREFIX), default_download_URL)
             self += submit
 
         class Apply:
@@ -604,12 +606,12 @@ CTK.publish ('^%s'%(URL_STAGE_FINISHED_APPLY), Stage_Finished.Apply, method="POS
 # Helpers
 #
 
-def Register_Standard_VServer_GUI (wizard_name, Install_Class, default_download_URL):
-    wizard_url_name = wizard_name.lower().replace(' ', '_')
+def Register_Standard_VServer_GUI (wizard_info, Install_Class, default_download_func):
+    wizard_url_name = wizard_info['name'].lower().replace(' ', '_')
     url_srv         = '/wizard/vserver/%s' %(wizard_url_name)
 
-    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_name, 'vserver').Render().toStr())
-    CTK.publish ('^%s/2$'%(url_srv), lambda: Stage_Install_Type (default_download_URL).Render().toStr())
+    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_info['name'], 'vserver').Render().toStr())
+    CTK.publish ('^%s/2$'%(url_srv), lambda: Stage_Install_Type (default_download_func).Render().toStr())
     CTK.publish ('^%s/3$'%(url_srv), Stage_Install_Directory)
     CTK.publish ('^%s/4$'%(url_srv), Stage_Enter_VServer)
     CTK.publish ('^%s/5$'%(url_srv), Stage_VServer_Logging)
@@ -617,7 +619,7 @@ def Register_Standard_VServer_GUI (wizard_name, Install_Class, default_download_
     CTK.publish ('^%s/7$'%(url_srv), lambda: Stage_Do_Install (Install_Class, "%s/8"%(url_srv)).Render().toStr())
     CTK.publish ('^%s/8$'%(url_srv), Stage_Finished)
 
-def Register_Standard_Directory_GUI (wizard_name, Install_Class, default_download_URL):
+def Register_Standard_Directory_GUI (wizard_info, Install_Class, default_download_func):
     None
 
 def Register_Standard_GUI (*args, **kw):

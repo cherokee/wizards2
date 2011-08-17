@@ -126,10 +126,10 @@ software = {
 class Install (php_tpl.Install):
     def __init__ (self, params):
         php_tpl.Install.__init__ (self,
-                                  app_name         = "Wordpress",
+                                  app_info         = software,
                                   config_vserver   = CONFIG_VSERVER,
                                   config_directory = CONFIG_DIR,
-                                  default_download = TARBALL,
+                                  default_download = lambda: TARBALL,
                                   params           = params)
 
     def Check_Prerequisites (self):
@@ -143,7 +143,7 @@ class Install (php_tpl.Install):
         if errors: return errors
 
         # Update app_dir, WP is in a subdir
-        self.app_dir = os.path.join (self.app_dir, "wordpress")
+        self._Update_app_dir ("wordpress.*")
 
     def Check_PostUnpack (self):
         return self._Check_File_Exists ('wp-comments-post.php')
@@ -155,4 +155,4 @@ class Install (php_tpl.Install):
 #
 # GUI
 #
-GUI.Register_Standard_GUI ('Wordpress', Install, TARBALL)
+GUI.Register_Standard_GUI (software, Install, lambda: TARBALL)
