@@ -262,17 +262,28 @@ class Wizard (object):
 
         return errors
 
+_modules = {}
 def Load_Module (path):
-    tmp = path.split('/')
-    dsc = tmp[-1].replace('.py','')
+    global _modules
+    if not path in _modules:
+        tmp = path.split('/')
+        dsc = tmp[-1].replace('.py','')
 
-    php_mod_path = os.path.realpath (__file__ + '/../wizards/' + path)
-    return CTK.load_module_pyc (php_mod_path, dsc)
+        php_mod_path = os.path.realpath (__file__ + '/../wizards/' + path)
+        _modules[path] = CTK.load_module_pyc (php_mod_path, dsc)
 
+    return _modules[path]
+
+
+_templates = {}
 def Load_Template (path):
-    tmp = path.split('/')
-    dsc = tmp[-1].replace('.py','')
+    global _templates
+    if not path in _templates:
+        tmp = path.split('/')
+        dsc = tmp[-1].replace('.py','')
 
-    php_mod_path = os.path.realpath (__file__ + '/../templates/' + path)
-    return CTK.load_module_pyc (php_mod_path, dsc)
+        php_mod_path = os.path.realpath (__file__ + '/../templates/' + path)
+        _templates[path] = CTK.load_module_pyc (php_mod_path, dsc)
+
+    return _templates[path]
 
