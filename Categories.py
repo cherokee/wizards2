@@ -93,9 +93,9 @@ def load_wizards():
     return _wizards_objs
 
 class Icon (CTK.Image):
-    def __init__ (self, wizard_mod, _props={}):
-        icon = wizard_mod.software['icon_small']
-        name = wizard_mod.software['name']
+    def __init__ (self, wizard_info, _props={}):
+        icon = wizard_info['icon_small']
+        name = wizard_info['name']
 
         props = _props.copy()
         props['src'] = '/static/images/wizards2/%s'%(icon)
@@ -140,7 +140,7 @@ class CategoryList_Widget (CTK.Box):
             w_id   = wizard_mod.software['id']
             w_desc = wizard_mod.software['desc_short']
 
-            wlist.Add ([CTK.Box({'class': 'logo'},  Icon(wizard_mod)),
+            wlist.Add ([CTK.Box({'class': 'logo'},  Icon(wizard_mod.software)),
                         CTK.Box({'class': 'title'}, CTK.RawHTML(_(w_name))),
                         CTK.Box({'class': 'descr'}, CTK.RawHTML(_(w_desc)))],
                        {'wizard': w_id})

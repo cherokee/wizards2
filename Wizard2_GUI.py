@@ -27,6 +27,7 @@ import time
 import CTK
 import validations
 import CommandProgress
+import Categories
 
 from configured import *
 
@@ -99,8 +100,9 @@ class Phase_PrevNext (Phase):
 #
 
 class Phase_Welcome (Phase_Next):
-    def __init__ (self, wizard, install_type):
-        Phase_Next.__init__ (self, "Welcome to the %s Wizard"%(wizard))
+    def __init__ (self, wizard_info, install_type):
+        Phase_Next.__init__ (self, _("Welcome to the %(wizard_name)s Wizard")%({'wizard_name': wizard_info['name']}))
+        self.wizard_info = wizard_info
 
         # Clean up previous wizard info
         del (CTK.cfg[CFG_PREFIX])
@@ -109,7 +111,24 @@ class Phase_Welcome (Phase_Next):
         CTK.cfg['%s!type'%(CFG_PREFIX)] = install_type
 
     def __build_GUI__ (self):
-        self += CTK.RawHTML ('Welcome!')
+        icon = CTK.Box ({'class': 'icon'})
+        icon += Categories.Icon (self.wizard_info)
+
+        by = CTK.Box ({'class': 'by'})
+        by += CTK.RawHTML (_('By: '))
+        by += CTK.LinkWindow (self.wizard_info['URL'], CTK.RawHTML(self.wizard_info['author']), {'rel': "nofollow"})
+
+        packager = CTK.Box ({'class': 'packager'})
+        packager += CTK.RawHTML (_('Packager: '))
+        packager += CTK.LinkWindow ("mailto:"+self.wizard_info['packager_email'], CTK.RawHTML(self.wizard_info['packager_name']))
+
+        desc = CTK.Box ({'class': 'web'})
+        desc += CTK.RawHTML (self.wizard_info['desc_short'])
+
+        self += icon
+        self += by
+        self += packager
+        self += desc
 
 
 #
@@ -610,7 +629,7 @@ def Register_Standard_VServer_GUI (wizard_info, Install_Class, default_download_
     wizard_url_name = wizard_info['name'].lower().replace(' ', '_')
     url_srv         = '/wizard/vserver/%s' %(wizard_url_name)
 
-    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_info['name'], 'vserver').Render().toStr())
+    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_info, 'vserver').Render().toStr())
     CTK.publish ('^%s/2$'%(url_srv), lambda: Stage_Install_Type (default_download_func).Render().toStr())
     CTK.publish ('^%s/3$'%(url_srv), Stage_Install_Directory)
     CTK.publish ('^%s/4$'%(url_srv), Stage_Enter_VServer)

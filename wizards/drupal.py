@@ -137,13 +137,15 @@ features are flexibility, simplicity, utility, modularity,
 extensibility and maintainability in the code."""
 
 software = {
- 'id':          'drupal',
- 'name':        'Drupal',
- 'author':      'Drupal Community',
- 'URL':         'http://drupal.org/',
- 'icon_small':  'drupal_x96.png',
- 'desc_short':  DESC_SHORT,
- 'category':    'Content Management',
+ 'id':             'drupal',
+ 'name':           'Drupal',
+ 'author':         'Drupal Community',
+ 'URL':            'http://drupal.org/',
+ 'icon_small':     'drupal_x96.png',
+ 'category':       'Content Management',
+ 'packager_name':  'Alvaro Lopez Ortega',
+ 'packager_email': 'alvaro@alobbs.com',
+ 'desc_short':     DESC_SHORT,
 }
 
 

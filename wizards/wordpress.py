@@ -111,13 +111,15 @@ well-architected personal publishing system.
 """
 
 software = {
- 'id':          'wordpress',
- 'name':        'WordPress',
- 'author':      'Wordpress Community',
- 'URL':         'http://wordpress.org/',
- 'icon_small':  'wordpress_x96.png',
- 'desc_short':  DESC_SHORT,
- 'category':    'Content Management',
+ 'id':             'wordpress',
+ 'name':           'WordPress',
+ 'author':         'Wordpress Community',
+ 'URL':            'http://wordpress.org/',
+ 'icon_small':     'wordpress_x96.png',
+ 'category':       'Content Management',
+ 'packager_name':  'Alvaro Lopez Ortega',
+ 'packager_email': 'alvaro@alobbs.com',
+ 'desc_short':     DESC_SHORT,
 }
 
 #
