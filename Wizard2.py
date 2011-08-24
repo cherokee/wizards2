@@ -33,13 +33,13 @@ class Wizard (object):
     """
     self.params
     -----------
-    type :        'directory' or 'vserver'
-    vserver_num:  10, 20, ..
-    directory:    /webdir
-    vserver_nick: example.com
-    app_fetch:    /tmp/bat.tgz, http://_/foo.tgz
-    app_dir:      /var/www_apps/worpress
-    targz_path:   /tmp/foobar.tgz
+    type :         'directory' or 'vserver'
+    vserver_num:   10, 20, ..
+    web_directory: /webdir
+    vserver_nick:  example.com
+    app_fetch:     /tmp/bat.tgz, http://_/foo.tgz
+    app_dir:       /var/www_apps/worpress
+    targz_path:    /tmp/foobar.tgz
     """
 
     type       = property (lambda s: s.params.get('type'),       lambda s,v: s.params.update({'type': v}))
@@ -101,17 +101,17 @@ class Wizard (object):
         # Directory
         if self.type == 'directory':
             vserver_num = self.params.get('vserver_num')
-            directory   = self.params.get('directory')
+            directory   = self.params.get('web_directory')
 
             if not vserver_num:
                 errors += ["Property 'vserver_num' missing"]
             elif not vserver_num.isdigit():
-                errors += ["Invalid value of the 'directory' property: it must be a number"]
+                errors += ["Invalid value of the 'vserver_num' property: it must be a number"]
 
             if not directory:
-                errors += ["Property 'directory' missing"]
+                errors += ["Property 'web_directory' missing"]
             elif directory[0] != '/':
-                errors += ["Invalid value of the 'directory' property: it must be a directory path"]
+                errors += ["Invalid value of the 'web_directory' property: it must be a directory path"]
 
         # Virtual Server
         elif self.type == 'vserver':

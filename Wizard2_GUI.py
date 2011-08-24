@@ -23,6 +23,7 @@
 #
 
 import os
+import re
 import time
 import CTK
 import validations
@@ -35,7 +36,8 @@ from configured import *
 CFG_PREFIX = "tmp!wizard"
 
 VALIDATION = [
-    ('%s!vserver_nick'%(CFG_PREFIX), validations.is_not_empty),
+    ('%s!vserver_nick' %(CFG_PREFIX), validations.is_not_empty),
+    ('%s!web_directory'%(CFG_PREFIX), validations.is_dir_formatted),
 ]
 
 #
@@ -110,6 +112,11 @@ class Phase_Welcome (Phase_Next):
         # Set installation type
         CTK.cfg['%s!type'%(CFG_PREFIX)] = install_type
 
+        # Figure out virtual server ID if it's a 'directory' install
+        if install_type == "directory":
+            tmp = re.findall (r'/wizard/vserver/(\d+)/', CTK.request.url)
+            CTK.cfg['%s!vserver_num'%(CFG_PREFIX)] = tmp[0]
+
     def __build_GUI__ (self):
         icon = CTK.Box ({'class': 'icon'})
         icon += Categories.Icon (self.wizard_info)
@@ -163,6 +170,37 @@ URL_STAGE_ENTER_VSERVER_APPLY = "/wizard2/stages/enter_vserver/apply"
 
 CTK.publish ('^%s'%(URL_STAGE_ENTER_VSERVER),       Stage_Enter_VServer)
 CTK.publish ('^%s'%(URL_STAGE_ENTER_VSERVER_APPLY), Stage_Enter_VServer.Apply, validation=VALIDATION, method="POST")
+
+
+#
+# Enter Web Directory
+#
+
+NOTE_WEBDIR = N_("Web directory where the application will be accessible. For example: /blog")
+
+class Stage_Enter_Web_Directory (Phase_PrevNext):
+    class Apply:
+        def __call__ (self):
+            return CTK.cfg_apply_post()
+
+    def __init__ (self):
+        Phase_PrevNext.__init__ (self, _("Name of the Web Directory"))
+
+    def __build_GUI__ (self):
+        table = CTK.PropsTable()
+        table.Add (_('Web Directory'), CTK.TextCfg('%s!web_directory'%(CFG_PREFIX), False, {'class':'noauto'}), _(NOTE_WEBDIR))
+
+        submit = CTK.Submitter (URL_STAGE_ENTER_WEBDIR_APPLY)
+        submit.bind ('submit_success', CTK.DruidContent__JS_to_goto_next (table.id))
+        submit += table
+
+        self += submit
+
+URL_STAGE_ENTER_WEBDIR       = "/wizard2/stages/enter_webdir"
+URL_STAGE_ENTER_WEBDIR_APPLY = "/wizard2/stages/enter_webdir/apply"
+
+CTK.publish ('^%s'%(URL_STAGE_ENTER_WEBDIR),       Stage_Enter_Web_Directory)
+CTK.publish ('^%s'%(URL_STAGE_ENTER_WEBDIR_APPLY), Stage_Enter_Web_Directory.Apply, validation=VALIDATION, method="POST")
 
 
 #
@@ -626,7 +664,7 @@ CTK.publish ('^%s'%(URL_STAGE_FINISHED_APPLY), Stage_Finished.Apply, method="POS
 #
 
 def Register_Standard_VServer_GUI (wizard_info, Install_Class, default_download_func):
-    wizard_url_name = wizard_info['name'].lower().replace(' ', '_')
+    wizard_url_name = wizard_info['id']
     url_srv         = '/wizard/vserver/%s' %(wizard_url_name)
 
     CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_info, 'vserver').Render().toStr())
@@ -639,7 +677,16 @@ def Register_Standard_VServer_GUI (wizard_info, Install_Class, default_download_
     CTK.publish ('^%s/8$'%(url_srv), Stage_Finished)
 
 def Register_Standard_Directory_GUI (wizard_info, Install_Class, default_download_func):
-    None
+    wizard_url_name = wizard_info['id']
+    url_srv         = '/wizard/vserver/\d+/%s' %(wizard_url_name)
+
+    CTK.publish ('^%s$'  %(url_srv), lambda: Phase_Welcome (wizard_info, 'directory').Render().toStr())
+    CTK.publish ('^%s/2$'%(url_srv), lambda: Stage_Install_Type (default_download_func).Render().toStr())
+    CTK.publish ('^%s/3$'%(url_srv), Stage_Enter_Web_Directory)
+    CTK.publish ('^%s/4$'%(url_srv), Stage_Install_Directory)
+    CTK.publish ('^%s/5$'%(url_srv), Stage_Download)
+    CTK.publish ('^%s/6$'%(url_srv), lambda: Stage_Do_Install (Install_Class, CTK.request.url[:-1]+'7').Render().toStr())
+    CTK.publish ('^%s/7$'%(url_srv), Stage_Finished)
 
 def Register_Standard_GUI (*args, **kw):
     Register_Standard_VServer_GUI   (*args, **kw)

@@ -80,26 +80,26 @@ vserver!%(vserver_num)s!directory_index = index.php,index.html
 
 CONFIG_DIR = """
 %(pre_rule_plus4)s!match = request
-%(pre_rule_plus4)s!match!request = ^%(target_directory)s/([0-9]+)$
+%(pre_rule_plus4)s!match!request = ^%(web_directory)s/([0-9]+)$
 %(pre_rule_plus4)s!handler = redir
-%(pre_rule_plus4)s!handler!rewrite!1!regex = ^%(target_directory)s/([0-9]+)$
+%(pre_rule_plus4)s!handler!rewrite!1!regex = ^%(web_directory)s/([0-9]+)$
 %(pre_rule_plus4)s!handler!rewrite!1!show = 0
-%(pre_rule_plus4)s!handler!rewrite!1!substring = %(target_directory)s/index.php?q=/node/$1
+%(pre_rule_plus4)s!handler!rewrite!1!substring = %(web_directory)s/index.php?q=/node/$1
 
 %(pre_rule_plus3)s!match = request
-%(pre_rule_plus3)s!match!request = %(target_directory)s/$
+%(pre_rule_plus3)s!match!request = %(web_directory)s/$
 %(pre_rule_plus3)s!handler = redir
 %(pre_rule_plus3)s!handler!rewrite!1!show = 0
-%(pre_rule_plus3)s!handler!rewrite!1!substring = %(target_directory)s/index.php
+%(pre_rule_plus3)s!handler!rewrite!1!substring = %(web_directory)s/index.php
 
 %(pre_rule_plus2)s!match = directory
-%(pre_rule_plus2)s!match!directory = %(target_directory)s
+%(pre_rule_plus2)s!match!directory = %(web_directory)s
 %(pre_rule_plus2)s!match!final = 0
 %(pre_rule_plus2)s!document_root = %(app_dir)s
 
 %(pre_rule_plus1)s!match = and
 %(pre_rule_plus1)s!match!left = directory
-%(pre_rule_plus1)s!match!left!directory = %(target_directory)s
+%(pre_rule_plus1)s!match!left!directory = %(web_directory)s
 %(pre_rule_plus1)s!match!right = request
 %(pre_rule_plus1)s!match!right!request = \.(engine|inc|info|install|module|profile|test|po|sh|.*sql|theme|tpl(\.php)?|xtmpl|svn-base)$|^(code-style\.pl|Entries.*|Repository|Root|Tag|Template|all-wcprops|entries|format)$
 %(pre_rule_plus1)s!handler = custom_error
@@ -109,7 +109,7 @@ CONFIG_DIR = """
 
 %(pre_rule_minus1)s!match = and
 %(pre_rule_minus1)s!match!left = directory
-%(pre_rule_minus1)s!match!left!directory = %(target_directory)s
+%(pre_rule_minus1)s!match!left!directory = %(web_directory)s
 %(pre_rule_minus1)s!match!right = exists
 %(pre_rule_minus1)s!match!right!iocache = 1
 %(pre_rule_minus1)s!match!right!match_any = 1
@@ -118,14 +118,14 @@ CONFIG_DIR = """
 %(pre_rule_minus1)s!handler = file
 
 %(pre_rule_minus2)s!match = directory
-%(pre_rule_minus2)s!match!directory = %(target_directory)s
+%(pre_rule_minus2)s!match!directory = %(web_directory)s
 %(pre_rule_minus2)s!handler = redir
 %(pre_rule_minus2)s!handler!rewrite!1!show = 0
 %(pre_rule_minus2)s!handler!rewrite!1!regex = ^/(.*)\?(.*)$
-%(pre_rule_minus2)s!handler!rewrite!1!substring = %(target_directory)s/index.php?q=$1&$2
+%(pre_rule_minus2)s!handler!rewrite!1!substring = %(web_directory)s/index.php?q=$1&$2
 %(pre_rule_minus2)s!handler!rewrite!2!show = 0
 %(pre_rule_minus2)s!handler!rewrite!2!regex = ^/(.*)$
-%(pre_rule_minus2)s!handler!rewrite!2!substring = %(target_directory)s/index.php?q=$1
+%(pre_rule_minus2)s!handler!rewrite!2!substring = %(web_directory)s/index.php?q=$1
 """
 
 #
