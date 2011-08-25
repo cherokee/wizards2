@@ -195,7 +195,12 @@ def _figure_fpm_settings():
         paths.append (p)
         paths.append ('%s-*' %(p))
 
-    fpm_info = {}
+    # Helper functions
+    get_regex = lambda key: r'^\s*' + key.replace('.','\.') + '\s*=\s*(.+?)\s*$'
+    findall   = lambda key: re.findall (get_regex(key), content, re.M)
+
+    fpm_info      = {}
+    FPM_CONF_KEYS = ('listen', 'request_terminate_timeout', 'user', 'group', 'pm.status_path', 'ping.path')
 
     # For each configuration file
     for conf_file in path_eval_exist (paths):
@@ -205,50 +210,21 @@ def _figure_fpm_settings():
         except:
             continue
 
-        # Listen
-        if not fpm_info.get('listen'):
-            tmp = re.findall (r'<value name="listen_address">(.*?)</value>', content)
-            if tmp:
-                fpm_info['listen'] = tmp[0]
-            else:
-                tmp = re.findall (r'^listen *= *(.+)$', content, re.M)
-                if tmp:
-                    fpm_info['listen']  = tmp[0]
-
-        # Timeout
-        if not fpm_info.get('timeout'):
-            tmp = re.findall (r'<value name="request_terminate_timeout">(\d*)s*</value>', content)
-            if tmp:
-                fpm_info['timeout'] = tmp[0]
-            else:
-                tmp = re.findall (r'^request_terminate_timeout *= *(\d*)s*', content, re.M)
-                if tmp:
-                    fpm_info['timeout'] = tmp[0]
-
         # Filename
         if not fpm_info.get('conf_file'):
             if '.conf' in conf_file:
                 fpm_info['conf_file'] = conf_file
 
-        # User
-        if not fpm_info.get('user'):
-            tmp = re.findall (r'<value name="user">(.*?)</value>', content)
-            if tmp:
-                fpm_info['user'] = tmp[0]
-            else:
-                tmp = re.findall (r'^user *= *(.*)$', content, re.M)
+        # Keys
+        for conf_key in FPM_CONF_KEYS:
+            if not fpm_info.has_key(conf_key):
+                tmp = findall (conf_key)
                 if tmp:
-                    fpm_info['user'] = tmp[0]
+                    fpm_info[conf_key] = tmp[0]
 
-        # Group
-        if not fpm_info.get('group'):
-            tmp = re.findall (r'<value name="group">(.*?)</value>', content)
-            if tmp:
-                fpm_info['group'] = tmp[0]
-            else:
-                tmp = re.findall (r'^group *= *(.*)$', content, re.M)
-                if tmp:
-                    fpm_info['group'] = tmp[0]
+    # Rename keys
+    if fpm_info.has_key('request_terminate_timeout'):
+        fpm_info['timeout'] = fpm_info.pop('request_terminate_timeout')
 
     # Set last minute defaults
     if not fpm_info.get('timeout'):
