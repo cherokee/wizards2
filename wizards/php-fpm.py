@@ -56,6 +56,27 @@ FPM_ETC_PATHS = ['/etc/php*/fpm/*.conf',
 
 PHP_DEFAULT_TIMEOUT = '30'
 
+CONF_MATCH_EXTENSION = """
+%(next)s!match = extensions
+%(next)s!match!extensions = php
+%(next)s!match!final = 0
+%(next)s!handler!check_file = 1
+"""
+
+CONF_MATCH_SPECIAL = """
+%(next)s!match!final = 1
+%(next)s!handler!check_file = 0
+"""
+
+CONF_COMMON = """
+%(next)s!handler = fcgi
+%(next)s!handler!balancer = round_robin
+%(next)s!handler!balancer!source!1 = %(src_num)s
+%(next)s!handler!error_handler = 1
+%(next)s!encoder!gzip = 1
+%(next)s!timeout = %(timeout)s
+"""
+
 
 class Install (Wizard2.Wizard):
     def __init__ (self, params):
@@ -131,25 +152,35 @@ class Install (Wizard2.Wizard):
         if not timeout:
             timeout = PHP_DEFAULT_TIMEOUT
 
+        # Extra matches: FPM's special URLs
+        extra_matches = []
+
+        for key in ('pm.status_path', 'ping.path'):
+            web_path = fpm_info.get (key)
+            if web_path:
+                extra_matches += [('fullpath', web_path)]
+
         # Add behavior rule
         if not self.rule:
             next = CTK.cfg.get_next_entry_prefix('%s!rule'%(pre))
             src_num = self.source.split('!')[-1]
 
-            CTK.cfg['%s!match' %(next)]                     = 'extensions'
-            CTK.cfg['%s!match!extensions' %(next)]          = 'php'
-            CTK.cfg['%s!match!check_local_file' %(next)]    = '1'
-            CTK.cfg['%s!match!final' %(next)]               = '0'
-            CTK.cfg['%s!handler' %(next)]                   = 'fcgi'
-            CTK.cfg['%s!handler!balancer' %(next)]          = 'round_robin'
-            CTK.cfg['%s!handler!balancer!source!1' %(next)] = src_num
-            CTK.cfg['%s!handler!error_handler' %(next)]     = '1'
-            CTK.cfg['%s!encoder!gzip' %(next)]              = '1'
-            CTK.cfg['%s!timeout' %(next)]                   = timeout
+            # Extension php
+            cfg = (CONF_MATCH_EXTENSION + CONF_COMMON) %(locals())
 
-            # Front-Line Cache
             if int(self.params.get('flcache', "1")):
-                CTK.cfg['%s!flcache' %(next)]               = 'allow'
+                cfg += '%(next)s!flcache = allow\n' %(locals())
+
+            CTK.cfg.apply_chunk (cfg)
+
+            # Status
+            if extra_matches:
+                next = CTK.cfg.get_next_entry_prefix('%s!rule'%(pre))
+
+                cfg  = build_match_OR ('%s!match'%(next), extra_matches)
+                cfg += (CONF_MATCH_SPECIAL + CONF_COMMON) %(locals())
+
+                CTK.cfg.apply_chunk (cfg)
 
             # Normalization
             CTK.cfg.normalize('%s!rule'%(pre))
@@ -166,6 +197,27 @@ class Install (Wizard2.Wizard):
 #
 # Helper functions
 #
+
+def build_match_OR (prefix, matches_list):
+    def match_render (prefix, match_tuple):
+        match = match_tuple[0]
+        value = match_tuple[1]
+
+        CTK.cfg[prefix] = match
+        print prefix, match
+        if match in ['extensions']:
+            return "%s!%s = %s\n" %(prefix, match, value)
+        elif match in ['fullpath']:
+            return "%s!%s!1 = %s\n" %(prefix, match, value)
+
+    if len(matches_list) == 1:
+        return match_render (prefix, matches_list[0])
+    elif len(matches_list) > 1:
+        txt = "%s = or\n" %(prefix)
+        txt += match_render   ('%s!left' %(prefix), matches_list[0])
+        txt += build_match_OR ('%s!right'%(prefix), matches_list[1:])
+        return txt
+
 
 def _find_binary ():
     return path_find_binary (FPM_BINS,
@@ -185,8 +237,11 @@ def _find_source():
         if source:
             return source
 
-def _find_rule (key):
-    return cfg_vsrv_rule_find_extension (key, 'php')
+def _find_rule (pre_vserver):
+    tmp = re.findall (r'^%s\!rule\!(\d+).*\!extensions\s*=\s*(.+)$'%(pre_vserver.replace('!', '\!')), str(CTK.cfg), re.M)
+    if tmp:
+        if 'php' in tmp[0][1]:
+            return '%s!rule!%s'%(pre_vserver, tmp[0][0])
 
 def _figure_fpm_settings():
     # Find config file
