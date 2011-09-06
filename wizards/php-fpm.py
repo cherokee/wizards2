@@ -127,16 +127,14 @@ class Install (Wizard2.Wizard):
             CTK.cfg['%s!host'        %(next)] = host
             CTK.cfg['%s!interpreter' %(next)] = '%(php_bin)s --fpm-config %(conf_file)s' %(locals())
 
-            web_user  = CTK.cfg.get_val ('server!user',  str(os.getuid()))
-            web_group = CTK.cfg.get_val ('server!group', str(os.getgid()))
-            php_user  = fpm_info.get ('user',  web_user)
-            php_group = fpm_info.get ('group', web_group)
+            # Launch as root: php-fpm must be launched as root, so it
+            # can keep the log file save. It will drop its privileges
+            # according to its configuration file.
+            #
+            php_user  = fpm_info.get ('user')
+            php_group = fpm_info.get ('group')
 
-            if php_user != web_user or php_group != web_group:
-
-                # In case FPM has specific UID/GID and differs from
-                # Cherokee's, the interpreter must by spawned by root.
-                #
+            if php_user or php_group:
                 root_user  = 0 # TODO
                 root_group = 0 # TODO
 
