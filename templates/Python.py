@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8; mode: python -*-
 #
 # Cherokee-admin
@@ -22,13 +23,26 @@
 # 02110-1301, USA.
 #
 
-import Categories
-import common
-
-#
-# Add the current dir to the Python path
-#
-
 import os
-import sys
-sys.path.append (os.path.dirname(__file__))
+import re
+import CTK
+import vserver
+import Wizard2
+import Wizard2_GUI
+import popen
+
+from util import *
+from wizards2.common import python
+
+class Install (Wizard2.Wizard):
+    def __init__ (self, app_info, config_vserver, config_directory, params=None):
+        # Base
+        Wizard2.Wizard.__init__ (self, app_info, params)
+
+        # Properties
+        self._config_vserver   = config_vserver
+        self._config_directory = config_directory
+
+        # Sibling wizard
+        self.python_int = python.find_python ('2.4.0', or_greater = True)
+        print "self.python_int", self.python_int

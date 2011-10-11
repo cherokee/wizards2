@@ -22,13 +22,4 @@
 # 02110-1301, USA.
 #
 
-import Categories
-import common
-
-#
-# Add the current dir to the Python path
-#
-
-import os
-import sys
-sys.path.append (os.path.dirname(__file__))
+import python
